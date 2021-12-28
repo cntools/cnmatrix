@@ -12,6 +12,7 @@
 
 #include <stdbool.h>
 
+#include <malloc.h>
 #include "cnmatrix/cn_flt.h"
 #include "math.h"
 #include "string.h"
