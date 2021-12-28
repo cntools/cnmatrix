@@ -418,7 +418,7 @@ void cnSqRootSymmetric(const CnMat *srcarr, CnMat *dstarr) {
             cnMatrixSet(dstarr, i, j, 0);
         }
     }
-    assert(info == 0);
+    assert(info >= 0);
 }
 
 static inline int cnSolve_SVD(const CnMat *Aarr, const CnMat *Barr, CnMat *xarr) {
@@ -556,6 +556,7 @@ SURVIVE_LOCAL_ONLY void cnSVD(CnMat *aarr, CnMat *warr, CnMat *uarr, CnMat *varr
 	}
 
 	if ((flags & CN_SVD_MODIFY_A) == 0) {
+	    free(aarr->data);
 		cnReleaseMat(&aarr);
 	}
 }

@@ -223,7 +223,7 @@ static void test_sym_sqrt() {
     CN_CREATE_STACK_MAT(C, 3, 3);
 
     cnSqRootSymmetric(&A, &C);
-    assertFLTAEquals(_B, _C, sizeof(FLT) * 3 * 3);
+    assertFLTAEquals(_B, _C, 3 * 3);
 }
 
 int main()
