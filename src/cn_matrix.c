@@ -41,7 +41,7 @@ FLT cnNorm2(const CnMat *s) {
   }
   return r;
 }
-FLT cnNorm(const CnMat *s) { return FLT_SQRT(cnNorm(s)); }
+FLT cnNorm(const CnMat *s) { return FLT_SQRT(cnNorm2(s)); }
 void cnSub(CnMat *dest, const CnMat *a, const CnMat *b) {
 	assert(a->cols * a->rows == dest->cols * dest->rows);
 	assert(b->cols * b->rows == dest->cols * dest->rows);
