@@ -22,11 +22,13 @@ jobs:
         include:
         - os: ubuntu-18.04
           build_type: Debug
+          use_eigen: ON
         - os: ubuntu-18.04
           build_type: Debug
           use_eigen: OFF
         - os: windows-latest
           build_type: Debug
+          use_eigen: ON
     steps:
     - uses: actions/checkout@v2
       with:
