@@ -1,13 +1,14 @@
 //#define EIGEN_RUNTIME_NO_MALLOC
 
-#include "linmath.h"
-#include "sv_matrix.h"
+#include "cnmatrix/cn_matrix.h"
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include <Eigen/QR>
 #include <Eigen/SVD>
 
 #include <iostream>
+#include <cnmatrix/cn_matrix.h>
+
 
 #ifdef EIGEN_RUNTIME_NO_MALLOC
 #define EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(v) EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(v)
@@ -15,21 +16,21 @@
 #define EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(v)
 #endif
 
-#ifdef SV_MATRIX_IS_COL_MAJOR
+#ifdef cn_MATRIX_IS_COL_MAJOR
 typedef Eigen::Matrix<FLT, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor, 50, 50> MatrixType;
 #else
 typedef Eigen::Matrix<FLT, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor, 50, 50> MatrixType;
 #endif
 typedef Eigen::Map<MatrixType> MapType;
 
-#define CONVERT_TO_EIGEN(A) MapType(A ? SV_FLT_PTR(A) : 0, A ? (A)->rows : 0, A ? (A)->cols : 0)
+#define CONVERT_TO_EIGEN(A) MapType(A ? CN_FLT_PTR(A) : 0, A ? (A)->rows : 0, A ? (A)->cols : 0)
 
-double svInvert(const SvMat *srcarr, SvMat *dstarr, enum svInvertMethod method) {
+double cnInvert(const CnMat *srcarr, CnMat *dstarr, enum cnInvertMethod method) {
 	auto src = CONVERT_TO_EIGEN(srcarr);
 	auto dst = CONVERT_TO_EIGEN(dstarr);
 
 	EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(false);
-	if (method == SV_INVERT_METHOD_LU) {
+	if (method == CN_INVERT_METHOD_LU) {
 		dst.noalias() = src.inverse();
 	} else {
 		dst.noalias() = src.completeOrthogonalDecomposition().pseudoInverse();
@@ -37,14 +38,23 @@ double svInvert(const SvMat *srcarr, SvMat *dstarr, enum svInvertMethod method) 
 	return 0;
 }
 
-extern "C" void svGEMM(const SvMat *_src1, const SvMat *_src2, double alpha, const SvMat *_src3, double beta,
-					   SvMat *_dst, enum svGEMMFlags tABC) {
+
+void cnSqRoot(const CnMat *srcarr, CnMat *dstarr) {
+    auto src = CONVERT_TO_EIGEN(srcarr);
+    auto dst = CONVERT_TO_EIGEN(dstarr);
+
+    EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(false);
+    dst.noalias() = Eigen::LLT<MatrixType>(src).matrixL().toDenseMatrix();
+}
+
+extern "C" void cnGEMM(const CnMat *_src1, const CnMat *_src2, double alpha, const CnMat *_src3, double beta,
+					   CnMat *_dst, enum cnGEMMFlags tABC) {
 	if (_src3) {
 		assert(_src3->data != _src2->data);
 		assert(_src3->data != _src1->data);
 		assert(_src3->data != _dst->data);
 	}
-	assert(_src2->data != _src1->data);
+	//assert(_src2->data != _src1->data);
 	assert(_src2->data != _dst->data);
 	assert(_src1->data != _dst->data);
 	auto src1 = CONVERT_TO_EIGEN(_src1);
@@ -53,13 +63,13 @@ extern "C" void svGEMM(const SvMat *_src1, const SvMat *_src2, double alpha, con
 	auto dst = CONVERT_TO_EIGEN(_dst);
 
 	EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(false);
-	if (tABC & SV_GEMM_FLAG_A_T)
-		if (tABC & SV_GEMM_FLAG_B_T)
+	if (tABC & CN_GEMM_FLAG_A_T)
+		if (tABC & CN_GEMM_FLAG_B_T)
 			dst.noalias() = alpha * src1.transpose() * src2.transpose();
 		else
 			dst.noalias() = alpha * src1.transpose() * src2;
 	else {
-		if (tABC & SV_GEMM_FLAG_B_T)
+		if (tABC & CN_GEMM_FLAG_B_T)
 			dst.noalias() = alpha * src1 * src2.transpose();
 		else
 			dst.noalias() = alpha * src1 * src2;
@@ -67,38 +77,38 @@ extern "C" void svGEMM(const SvMat *_src1, const SvMat *_src2, double alpha, con
 
 	if (_src3) {
 		auto src3 = CONVERT_TO_EIGEN(_src3);
-		if (tABC & SV_GEMM_FLAG_C_T)
+		if (tABC & CN_GEMM_FLAG_C_T)
 			dst.noalias() += beta * src3.transpose();
 		else
 			dst.noalias() += beta * src3;
 	}
-	//assert(sv_is_finite(_dst));
+	//assert(cn_is_finite(_dst));
 }
 
-const int DECOMP_SVD = 1;
+const int DECOMP_cnD = 1;
 const int DECOMP_LU = 2;
 
-extern "C" int svSolve(const SvMat *_Aarr, const SvMat *_Barr, SvMat *_xarr, enum svInvertMethod method) {
+extern "C" int cnSolve(const CnMat *_Aarr, const CnMat *_Barr, CnMat *_xarr, enum cnInvertMethod method) {
 	auto Aarr = CONVERT_TO_EIGEN(_Aarr);
 	auto Barr = CONVERT_TO_EIGEN(_Barr);
 	auto xarr = CONVERT_TO_EIGEN(_xarr);
 
-	if (method == SV_INVERT_METHOD_LU) {
+	if (method == CN_INVERT_METHOD_LU) {
 		xarr.noalias() = Aarr.partialPivLu().solve(Barr);
-	} else if (method == SV_INVERT_METHOD_QR) {
+	} else if (method == CN_INVERT_METHOD_QR) {
 		xarr.noalias() = Aarr.colPivHouseholderQr().solve(Barr);
 	} else {
 		EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(true);
-		auto svd = Aarr.bdcSvd(
+		auto cnd = Aarr.bdcSvd(
 			Eigen::ComputeFullU |
-			Eigen::ComputeFullV); // Eigen::JacobiSVD<MatrixType>(Aarr, Eigen::ComputeFullU | Eigen::ComputeFullV);
+			Eigen::ComputeFullV); // Eigen::JacobicnD<MatrixType>(Aarr, Eigen::ComputeFullU | Eigen::ComputeFullV);
 		EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(false);
-		xarr.noalias() = svd.solve(Barr);
+		xarr.noalias() = cnd.solve(Barr);
 	}
 	return 0;
 }
 
-extern "C" void svSVD(SvMat *aarr, SvMat *warr, SvMat *uarr, SvMat *varr, enum svSVDFlags flags) {
+extern "C" void cnSVD(CnMat *aarr, CnMat *warr, CnMat *uarr, CnMat *varr, enum cnSVDFlags flags) {
 	auto aarrEigen = CONVERT_TO_EIGEN(aarr);
 	auto warrEigen = CONVERT_TO_EIGEN(warr);
 
@@ -108,35 +118,35 @@ extern "C" void svSVD(SvMat *aarr, SvMat *warr, SvMat *uarr, SvMat *varr, enum s
 	if (varr)
 		options |= Eigen::ComputeFullV;
 	EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(true);
-	auto svd = aarrEigen.bdcSvd(options);
+	auto cnd = aarrEigen.bdcSvd(options);
 	EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(false);
 
 	if (warrEigen.cols() == 1) {
-		warrEigen.noalias() = svd.singularValues();
+		warrEigen.noalias() = cnd.singularValues();
 	} else if (warrEigen.rows() == 1) {
-		warrEigen.noalias() = svd.singularValues().transpose();
+		warrEigen.noalias() = cnd.singularValues().transpose();
 	} else {
-		warrEigen.diagonal().noalias() = svd.singularValues();
+		warrEigen.diagonal().noalias() = cnd.singularValues();
 	}
 
 	if (uarr) {
 		auto uarrEigen = CONVERT_TO_EIGEN(uarr);
-		if (flags & SV_SVD_U_T)
-			uarrEigen.noalias() = svd.matrixU().transpose();
+		if (flags & CN_SVD_U_T)
+			uarrEigen.noalias() = cnd.matrixU().transpose();
 		else
-			uarrEigen.noalias() = svd.matrixU();
+			uarrEigen.noalias() = cnd.matrixU();
 	}
 
 	if (varr) {
 		auto varrEigen = CONVERT_TO_EIGEN(varr);
-		if (flags & SV_SVD_V_T)
-			varrEigen.noalias() = svd.matrixV().transpose();
+		if (flags & CN_SVD_V_T)
+			varrEigen.noalias() = cnd.matrixV().transpose();
 		else
-			varrEigen.noalias() = svd.matrixV();
+			varrEigen.noalias() = cnd.matrixV();
 	}
 }
 
-void svMulTransposed(const SvMat *src, SvMat *dst, int order, const SvMat *delta, double scale) {
+void cnMulTransposed(const CnMat *src, CnMat *dst, int order, const CnMat *delta, double scale) {
 	auto srcEigen = CONVERT_TO_EIGEN(src);
 	auto dstEigen = CONVERT_TO_EIGEN(dst);
 
@@ -154,18 +164,18 @@ void svMulTransposed(const SvMat *src, SvMat *dst, int order, const SvMat *delta
 	}
 }
 
-void svTranspose(const SvMat *M, SvMat *dst) {
+void cnTranspose(const CnMat *M, CnMat *dst) {
 	auto src = CONVERT_TO_EIGEN(M);
 	auto dstEigen = CONVERT_TO_EIGEN(dst);
-	if (SV_FLT_PTR(M) == SV_FLT_PTR(dst))
+	if (CN_FLT_PTR(M) == CN_FLT_PTR(dst))
 		dstEigen = src.transpose().eval();
 	else
 		dstEigen.noalias() = src.transpose();
 }
 
-void print_mat(const SvMat *M);
+void print_mat(const CnMat *M);
 
-double svDet(const SvMat *M) {
+double cnDet(const CnMat *M) {
 	EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(false);
 	auto MEigen = CONVERT_TO_EIGEN(M);
 	return MEigen.determinant();

@@ -15,9 +15,17 @@
 #include "cnmatrix/cn_flt.h"
 #include "math.h"
 #include "string.h"
+#include <assert.h>
 
 #define CN_FLT_PTR(m) ((FLT *)((m)->data))
 #define CN_RAW_PTR(m) ((FLT *)((m)->data))
+
+#ifdef __cplusplus
+extern "C" {
+static inline FLT cnMatrixGet(const struct CnMat *mat, int row, int col);
+static inline size_t cn_matrix_idx(const struct CnMat *mat, int row, int col);
+}
+#endif
 
 typedef struct CnMat {
 	int step;
@@ -26,6 +34,12 @@ typedef struct CnMat {
 
 	int rows;
 	int cols;
+#ifdef __cplusplus
+    FLT operator()(int i, int j) const { return cnMatrixGet(this, i, j);}
+    FLT& operator()(int i, int j) { return data[cn_matrix_idx(this, i, j)]; }
+    FLT operator()(int i) const { assert(cols == 1); return cnMatrixGet(this, i, 0);}
+    FLT& operator()(int i) { assert(cols == 1); return data[i]; }
+#endif
 } CnMat;
 
 #ifdef USE_EIGEN
@@ -49,7 +63,7 @@ extern "C" {
 
 CnMat *cnInitMatHeader(CnMat *arr, int rows, int cols);
 CnMat *cnCreateMat(int height, int width);
-
+  
 enum cnInvertMethod {
 	CN_INVERT_METHOD_UNKNOWN = 0,
 	CN_INVERT_METHOD_SVD = 1,
@@ -58,6 +72,8 @@ enum cnInvertMethod {
 };
 
 double cnInvert(const CnMat *srcarr, CnMat *dstarr, enum cnInvertMethod method);
+void cnSqRoot(const CnMat *srcarr, CnMat *dstarr);
+void cnRand(CnMat *dstarr, FLT mu, FLT sigma);
 
 enum cnGEMMFlags {
 	CN_GEMM_FLAG_A_T = 1,
@@ -68,6 +84,16 @@ enum cnGEMMFlags {
 void cnGEMM(const CnMat *src1, const CnMat *src2, double alpha, const CnMat *src3, double beta, CnMat *dst,
 			enum cnGEMMFlags tABC);
 
+FLT cnNorm(const CnMat *s);
+FLT cnNorm2(const CnMat *s);
+FLT cnDistance(const CnMat *a, const CnMat *b);
+void cnSub(CnMat *dest, const CnMat *a, const CnMat *b);
+void cnAdd(CnMat *dest, const CnMat *a, const CnMat *b);
+void cnAddScaled(CnMat *dest, const CnMat *a, FLT as, const CnMat *b, FLT bs);
+void cnScale(CnMat *dest, const CnMat *a, FLT s);
+void cnElementwiseMultiply(CnMat *dest, const CnMat *a, const CnMat *b);
+  FLT cnDot(const CnMat* a, const CnMat* b);
+  
 /**
  * xarr = argmin_x(Aarr * x - Barr)
  */
@@ -76,6 +102,7 @@ int cnSolve(const CnMat *Aarr, const CnMat *Barr, CnMat *xarr, enum cnInvertMeth
 void cnSetZero(CnMat *arr);
 
 void cnCopy(const CnMat *src, CnMat *dest, const CnMat *mask);
+void cnCopyROI(const CnMat *src, CnMat *dest, int start_i, int start_j);
 
 CnMat *cnCloneMat(const CnMat *mat);
 
@@ -103,9 +130,14 @@ double cnDet(const CnMat *M);
 #define CN_MATRIX_STACK_SCOPE_END
 #endif
 
+#define CN_CREATE_STACK_VEC(name, rows)					\
+  CN_MATRIX_STACK_SCOPE_BEGIN						\
+  FLT *_##name = (FLT*)CN_MATRIX_ALLOC((rows) * sizeof(FLT));	\
+  CnMat name = cnVec(rows, _##name);
+
 #define CN_CREATE_STACK_MAT(name, rows, cols)                                                                          \
 	CN_MATRIX_STACK_SCOPE_BEGIN                                                                                        \
-	FLT *_##name = CN_MATRIX_ALLOC((rows) * (cols) * sizeof(FLT));                                                     \
+	FLT *_##name = (FLT*)CN_MATRIX_ALLOC((rows) * (cols) * sizeof(FLT)); \
 	CnMat name = cnMat(rows, cols, _##name);
 
 #define CN_FREE_STACK_MAT(name)                                                                                        \
@@ -175,6 +207,12 @@ static inline CnMat cnMat(int rows, int cols, FLT *data) {
 
 	return m;
 }
+
+  static inline CnMat cnMatCalloc(int height, int width) {
+    return cnMat(height, width, (FLT *)calloc(height * width, sizeof(FLT)));
+  }
+
+static inline CnMat cnVec(int rows, FLT *data) { return cnMat(rows, 1, data); }
 
 static inline size_t cn_matrix_idx(const CnMat *mat, int row, int col) {
 	assert((unsigned)row < (unsigned)mat->rows && (unsigned)col < (unsigned)mat->cols);
@@ -275,6 +313,7 @@ static inline FLT cn_trace(const struct CnMat *A) {
 }
 
 static inline void cn_copy_data_in(struct CnMat *A, bool isRowMajor, const FLT *d) {
+    assert(A && d);
 #ifdef CN_MATRIX_IS_COL_MAJOR
 	bool needsFlip = isRowMajor;
 #else
@@ -305,15 +344,26 @@ static inline CnMat cnMat_from_col_major(int rows, int cols, FLT *data) {
 }
 
 static inline void cn_elementwise_subtract(struct CnMat *dst, const struct CnMat *A, const struct CnMat *B) {
+    assert(dst->rows == A->rows && dst->cols == A->cols);
+    assert(dst->rows == B->rows && dst->cols == B->cols);
 	for (int i = 0; i < A->rows; i++) {
 		for (int j = 0; j < A->cols; j++) {
 			cnMatrixSet(dst, i, j, cnMatrixGet(A, i, j) - cnMatrixGet(B, i, j));
 		}
 	}
 }
+static inline void cn_elementwise_add(struct CnMat *dst, const struct CnMat *A, const struct CnMat *B) {
+    assert(dst->rows == A->rows && dst->cols == A->cols);
+    assert(dst->rows == B->rows && dst->cols == B->cols);
+    for (int i = 0; i < A->rows; i++) {
+        for (int j = 0; j < A->cols; j++) {
+            cnMatrixSet(dst, i, j, cnMatrixGet(A, i, j) + cnMatrixGet(B, i, j));
+        }
+    }
+}
 
 static inline void cn_multiply_scalar(struct CnMat *dst, const struct CnMat *src, FLT scale) {
-	assert(dst->rows == src->rows && dst->cols == src->cols);
+    assert(dst->rows == src->rows && dst->cols == src->cols);
 	for(int i = 0;i < dst->cols * dst->rows;i++) dst->data[i] = src->data[i] * scale;
 }
 
@@ -333,4 +383,26 @@ static inline CnMat cn_row(struct CnMat *M, int r) {
 
 #ifdef __cplusplus
 }
+
+#include <vector>
+static inline std::vector<FLT> cnMatToVector(const CnMat& m) {
+    assert(m.cols == 1);
+    std::vector<FLT> v;
+    v.resize(m.rows);
+    for(int i = 0;i < m.rows;i++)
+        v[i] = m.data[i];
+    return v;
+}
+static inline std::vector<std::vector<FLT>> cnMatToVectorVector(const CnMat& m) {
+    std::vector<std::vector<FLT>> vv;
+    vv.resize(m.rows);
+    for(int i = 0;i < m.rows;i++) {
+        vv[i].resize(m.cols);
+        for (int j = 0; j < m.cols; j++) {
+            vv[i][j] = cnMatrixGet(&m, i, j);
+        }
+    }
+    return vv;
+}
+
 #endif

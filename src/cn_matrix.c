@@ -19,11 +19,109 @@ CN_LOCAL_ONLY CnMat *cnCloneMat(const CnMat *mat) {
 
 static size_t mat_size_bytes(const CnMat *mat) { return (size_t)sizeof(FLT) * mat->cols * mat->rows; }
 
+FLT cnDistance(const CnMat *a, const CnMat *b) {
+    assert(a->cols == b->cols);
+    assert(a->rows == b->rows);
+    FLT r = 0;
+    for (int i = 0; i < a->cols * a->rows; i++) {
+        FLT dx = a->data[i] - b->data[i];
+        r += dx*dx;
+    }
+    return FLT_SQRT(r);
+}
+FLT cnNorm2(const CnMat *s) {
+  FLT r = 0;
+  const FLT* in = s->data;
+  for (int i = 0; i < s->cols * s->rows; i++) {
+    r += in[i] * in[i];
+  }
+  return r;
+}
+FLT cnNorm(const CnMat *s) { return FLT_SQRT(cnNorm(s)); }
+void cnSub(CnMat *dest, const CnMat *a, const CnMat *b) {
+	assert(a->cols * a->rows == dest->cols * dest->rows);
+	assert(b->cols * b->rows == dest->cols * dest->rows);
+	for (int i = 0; i < (a->cols * a->rows); i++)
+		dest->data[i] = a->data[i] - b->data[i];
+}
+void cnAdd(CnMat *dest, const CnMat *a, const CnMat *b) {
+	assert(a->cols * a->rows == dest->cols * dest->rows);
+	assert(b->cols * b->rows == dest->cols * dest->rows);
+	for (int i = 0; i < (a->cols * a->rows); i++)
+		dest->data[i] = a->data[i] + b->data[i];
+}
+void cnAddScaled(CnMat *dest, const CnMat *a, FLT as, const CnMat *b, FLT bs) {
+	assert(a->cols * a->rows == dest->cols * dest->rows);
+	assert(b->cols * b->rows == dest->cols * dest->rows);
+	for (int i = 0; i < dest->cols * dest->rows; i++) {
+		dest->data[i] = a->data[i] * as + b->data[i] * bs;
+	}
+}
+void cnScale(CnMat *dest, const CnMat *a, FLT s) {
+	assert(a->cols * a->rows == dest->cols * dest->rows);
+	for (int i = 0; i < (a->cols * a->rows); i++)
+	  dest->data[i] = a->data[i] * s;
+}
+void cnElementwiseMultiply(CnMat *dest, const CnMat *a, const CnMat *b) {
+	assert(a->cols * a->rows == dest->cols * dest->rows);
+	assert(b->cols * b->rows == dest->cols * dest->rows);
+	for (int i = 0; i < dest->cols * dest->rows; i++) {
+		dest->data[i] = a->data[i] * b->data[i];
+	}
+}
+
+FLT cnDot(const CnMat* a, const CnMat* b) {
+  assert(a->cols * a->rows == b->cols * b->rows);
+  
+  FLT rtn = 0;
+  for (int i = 0; i < a->cols * a->rows; i++) {
+    rtn += a->data[i] * b->data[i];
+  }
+  return rtn;
+}
+
+static inline FLT linmath_max(FLT x, FLT y) { return x > y ? x : y; }
+static inline int linmath_imax(int x, int y) { return x > y ? x : y; }
+
+static inline FLT linmath_min(FLT x, FLT y) { return x < y ? x : y; }
+static inline int linmath_imin(int x, int y) { return x < y ? x : y; }
+
 void cnCopy(const CnMat *src, CnMat *dest, const CnMat *mask) {
-	assert(mask == 0 && "This isn't implemented yet");
-	assert(src->rows == dest->rows);
-	assert(src->cols == dest->cols);
-	memcpy(CN_RAW_PTR(dest), CN_RAW_PTR(src), mat_size_bytes(src));
+  assert(mask == 0 && "This isn't implemented yet");
+  if (src->rows == dest->rows && src->cols == dest->cols) {
+    memcpy(CN_RAW_PTR(dest), CN_RAW_PTR(src), mat_size_bytes(src));
+  } else {
+    for (int i = 0; i < linmath_imin(src->rows, dest->rows); i++)
+      for (int j = 0; j < linmath_imin(src->cols, dest->cols); j++)
+	cnMatrixSet(dest, i, j, cnMatrixGet(src, i, j));
+  }       
+}
+
+FLT linmath_normrand(FLT mu, FLT sigma) {
+    static const double epsilon = 0.0000001;
+
+    static double z1= NAN;
+    static bool generate = false;
+    generate = !generate;
+
+    if (!generate)
+        return z1 * sigma + mu;
+
+    double u1, u2;
+    do {
+        u1 = rand() * (1.0 / RAND_MAX);
+        u2 = rand() * (1.0 / RAND_MAX);
+    } while (u1 <= epsilon);
+
+    double z0 = sqrt(-2.0 * log(u1)) * cos(M_PI * 2. * u2);
+    z1 = sqrt(-2.0 * log(u1)) * sin(M_PI * 2. * u2);
+    return z0 * sigma + mu;
+}
+
+void cnRand(CnMat *arr, FLT mu, FLT sigma) {
+    for (int i = 0; i < arr->rows; i++)
+        for (int j = 0; j < arr->cols; j++)
+            CN_RAW_PTR(arr)[i * arr->cols + j] = linmath_normrand(mu, sigma);
 }
 
 CN_LOCAL_ONLY void cnSetZero(CnMat *arr) {
@@ -98,4 +196,12 @@ inline void cn_ABAt_add(struct CnMat *out, const struct CnMat *A, const struct C
 	cnGEMM(A, B, 1, 0, 0, &tmp, 0);
 	cnGEMM(&tmp, A, 1, C, 1, out, CN_GEMM_FLAG_B_T);
 	CN_FREE_STACK_MAT(tmp);
+}
+
+void cnCopyROI(const CnMat *src, CnMat *dest, int start_i, int start_j) {
+    for (int i = 0; i < src->rows; i++) {
+        for (int j = 0; j < src->cols; j++) {
+            cnMatrixSet(dest, start_i + i, start_j + j, cnMatrixGet(src, i, j));
+        }
+    }
 }
