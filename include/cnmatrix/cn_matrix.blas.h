@@ -36,9 +36,9 @@ extern "C" {
 #define CN_SUBMAT_FLAG (1 << CN_SUBMAT_FLAG_SHIFT)
 #define CN_IS_SUBMAT(flags) ((flags)&CN_MAT_SUBMAT_FLAG)
 
-#define CN_IS_MATND_HDR(mat) ((mat) != NULL && (((const SvMat *)(mat))->type & CN_MAGIC_MASK) == CN_MATND_MAGIC_VAL)
+#define CN_IS_MATND_HDR(mat) ((mat) != NULL && (((const CnMat *)(mat))->type & CN_MAGIC_MASK) == CN_MATND_MAGIC_VAL)
 
-#define CN_IS_MATND(mat) (CN_IS_MATND_HDR(mat) && ((const SvMat *)(mat))->data.ptr != NULL)
+#define CN_IS_MATND(mat) (CN_IS_MATND_HDR(mat) && ((const CnMat *)(mat))->data.ptr != NULL)
 #define CN_MATND_MAGIC_VAL 0x42430000
 
 /** 0x3a50 = 11 10 10 01 01 00 00 ~ array of log2(sizeof(arr_type_elem)) */

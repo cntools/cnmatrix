@@ -101,7 +101,7 @@ void cnCopy(const CnMat *src, CnMat *dest, const CnMat *mask) {
   }       
 }
 
-FLT linmath_normrand(FLT mu, FLT sigma) {
+static FLT linmath_normrand(FLT mu, FLT sigma) {
     static const double epsilon = 0.0000001;
 
     static double z1= NAN;
