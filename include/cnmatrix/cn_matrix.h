@@ -3,6 +3,7 @@
 #ifndef CN_EXPORT_FUNCTION
 #ifdef _WIN32
 #define CN_EXPORT_FUNCTION __declspec(dllexport)
+#define CN_EXPORT_CLASS CN_EXPORT_FUNCTION
 #define CN_IMPORT_FUNCTION __declspec(dllimport)
 #else
 #define CN_EXPORT_FUNCTION __attribute__((visibility("default")))
