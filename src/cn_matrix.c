@@ -10,6 +10,10 @@
 #define CN_LOCAL_ONLY __attribute__((visibility("hidden")))
 #endif
 
+#ifndef M_PI
+# define M_PI		3.14159265358979323846
+#endif
+
 #define CN_Error(code, msg) assert(0 && msg); // cv::error( code, msg, CN_Func, __FILE__, __LINE__ )
 CN_LOCAL_ONLY CnMat *cnCloneMat(const CnMat *mat) {
 	CnMat *rtn = cnCreateMat(mat->rows, mat->cols);
