@@ -345,6 +345,7 @@ SURVIVE_LOCAL_ONLY double cnInvert(const CnMat *srcarr, CnMat *dstarr, enum cnIn
 		cnGEMM(&v, &um, 1, 0, 0, tmp, CN_GEMM_FLAG_A_T);
 		cnGEMM(tmp, &u, 1, 0, 0, dstarr, CN_GEMM_FLAG_B_T);
 
+		free(tmp->data);
 		cnReleaseMat(&tmp);
 
 		CN_FREE_STACK_MAT(um);

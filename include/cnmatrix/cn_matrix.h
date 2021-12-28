@@ -6,6 +6,7 @@
 #define CN_IMPORT_FUNCTION __declspec(dllimport)
 #else
 #define CN_EXPORT_FUNCTION __attribute__((visibility("default")))
+#define CN_EXPORT_CLASS CN_EXPORT_FUNCTION
 #define CN_IMPORT_FUNCTION CN_EXPORT_FUNCTION
 #endif
 #endif
