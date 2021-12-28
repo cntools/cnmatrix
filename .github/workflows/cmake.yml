@@ -16,6 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        use_eigen: [ON, OFF]
         build_type: [Release]
         os: [ubuntu-18.04, windows-latest]
         include:
@@ -51,7 +52,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DUSE_EIGEN=On -DDOWNLOAD_EIGEN=On -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DENABLE_TESTS=ON -DCMAKE_INSTALL_PREFIX=install_root ${{matrix.config_flags}}
+      run: cmake $GITHUB_WORKSPACE -DUSE_EIGEN=On -DDOWNLOAD_EIGEN=${{matrix.use_eigen}} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DENABLE_TESTS=ON -DCMAKE_INSTALL_PREFIX=install_root ${{matrix.config_flags}}
 
     - name: Build
       working-directory: ${{runner.workspace}}/build

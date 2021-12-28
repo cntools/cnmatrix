@@ -205,6 +205,27 @@ static void test_multrans() {
 	assert(_C[0] == 140);
 }
 
+static void test_sym_sqrt() {
+    FLT _A[3 * 3] = {
+            4, 12, -16,
+            12, 37, -43,
+            -16, -43, 98
+    };
+    CnMat A = cnMat_from_row_major(3, 3, _A);
+
+    FLT _B[3 * 3] = {
+            2, 0, 0,
+            6, 1, 0,
+            -8, 5, 3
+    };
+    CnMat B = cnMat_from_row_major(3, 3, _B);
+
+    CN_CREATE_STACK_MAT(C, 3, 3);
+
+    cnSqRootSymmetric(&A, &C);
+    assertFLTAEquals(_B, _C, sizeof(FLT) * 3 * 3);
+}
+
 int main()
 {
 	test_invert();
@@ -212,7 +233,7 @@ int main()
 	test_solve();
 	test_svd();
 	test_multrans();
-
+    test_sym_sqrt();
 	return 0;
 }
 

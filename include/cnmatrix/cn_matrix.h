@@ -72,7 +72,7 @@ enum cnInvertMethod {
 };
 
 double cnInvert(const CnMat *srcarr, CnMat *dstarr, enum cnInvertMethod method);
-void cnSqRoot(const CnMat *srcarr, CnMat *dstarr);
+void cnSqRootSymmetric(const CnMat *srcarr, CnMat *dstarr);
 void cnRand(CnMat *dstarr, FLT mu, FLT sigma);
 
 enum cnGEMMFlags {

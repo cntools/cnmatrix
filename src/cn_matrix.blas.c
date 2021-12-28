@@ -44,6 +44,7 @@ static size_t mat_size_bytes(const CnMat *mat) { return (size_t)sizeof(FLT) * ma
 #define LAPACKE_gesvd_work LAPACKE_sgesvd_work
 #define LAPACKE_getri_work LAPACKE_sgetri_work
 #define LAPACKE_ge_trans LAPACKE_sge_trans
+#define LAPACKE_potrf LAPACKE_spotrf
 #else
 #define cblas_gemm cblas_dgemm
 #define cblas_symm cblas_dsymm
@@ -55,6 +56,7 @@ static size_t mat_size_bytes(const CnMat *mat) { return (size_t)sizeof(FLT) * ma
 #define LAPACKE_gesvd_work LAPACKE_dgesvd_work
 #define LAPACKE_getri_work LAPACKE_dgetri_work
 #define LAPACKE_ge_trans LAPACKE_dge_trans
+    #define LAPACKE_potrf LAPACKE_dpotrf
 #endif
 
 // dst = alpha * src1 * src2 + beta * src3 or dst = alpha * src2 * src1 + beta * src3 where src1 is symm
@@ -402,6 +404,21 @@ static int cnSolve_LU(const CnMat *Aarr, const CnMat *Barr, CnMat *xarr) {
 	CN_MATRIX_FREE(a_ws);
 	CN_MATRIX_FREE(ipiv);
 	return 0;
+}
+
+void cnSqRootSymmetric(const CnMat *srcarr, CnMat *dstarr) {
+    assert(srcarr->rows == srcarr->cols);
+    assert(dstarr->rows == dstarr->cols);
+    assert(dstarr->rows == srcarr->cols);
+
+    cnCopy(srcarr, dstarr, 0);
+    int info = LAPACKE_dpotrf(LAPACK_ROW_MAJOR, 'L', srcarr->cols, dstarr->data, dstarr->step);
+    for(int i = 0;i < dstarr->cols;i++) {
+        for(int j = i + 1;j < dstarr->cols;j++) {
+            cnMatrixSet(dstarr, i, j, 0);
+        }
+    }
+    assert(info == 0);
 }
 
 static inline int cnSolve_SVD(const CnMat *Aarr, const CnMat *Barr, CnMat *xarr) {

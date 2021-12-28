@@ -39,7 +39,7 @@ double cnInvert(const CnMat *srcarr, CnMat *dstarr, enum cnInvertMethod method) 
 }
 
 
-void cnSqRoot(const CnMat *srcarr, CnMat *dstarr) {
+void cnSqRootSymmetric(const CnMat *srcarr, CnMat *dstarr) {
     auto src = CONVERT_TO_EIGEN(srcarr);
     auto dst = CONVERT_TO_EIGEN(dstarr);
 
