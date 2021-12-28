@@ -23,6 +23,10 @@
 #define CN_FLT_PTR(m) ((FLT *)((m)->data))
 #define CN_RAW_PTR(m) ((FLT *)((m)->data))
 
+#ifndef M_PI
+# define M_PI		3.14159265358979323846
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 static inline FLT cnMatrixGet(const struct CnMat *mat, int row, int col);
