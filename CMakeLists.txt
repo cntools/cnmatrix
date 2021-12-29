@@ -14,6 +14,7 @@ include (CheckSymbolExists)
 option(DOWNLOAD_EIGEN "Download eigen if it isn't installed on the system" ON)
 option(USE_EIGEN "Use eigen for math operations" DOWNLOAD_EIGEN)
 option(USE_COLUMN_MAJOR_MATRICES "Use column major matrices for math operations" OFF)
+option(USE_SINGLE_PRECISION "Use floats instead of doubles" OFF)
 
 find_package (Eigen3 3.3)
 if(NOT EIGEN3_FOUND)
@@ -51,8 +52,6 @@ install(DIRECTORY include/cnmatrix DESTINATION include)
 include(GNUInstallDirs)
 configure_file(cnmatrix.pc.in cnmatrix.pc @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cnmatrix.pc" DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
-
-
 
 IF(UNIX)
   set(SHARED_FLAGS "-fPIC -Wall -Wno-unused-variable -Wno-switch -Wno-parentheses -Wno-missing-braces -Werror=return-type -fvisibility=hidden -Werror=vla -fno-math-errno -Werror=missing-field-initializers -Werror=pointer-arith")

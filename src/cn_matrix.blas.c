@@ -33,7 +33,7 @@ void print_mat(const CnMat *M);
 
 static size_t mat_size_bytes(const CnMat *mat) { return (size_t)sizeof(FLT) * mat->cols * mat->rows; }
 
-#ifdef USE_FLOAT
+#ifdef CN_USE_FLOAT
 #define cblas_gemm cblas_sgemm
 #define cblas_symm cblas_ssymm
 #define LAPACKE_getrs LAPACKE_sgetrs
@@ -413,7 +413,7 @@ void cnSqRootSymmetric(const CnMat *srcarr, CnMat *dstarr) {
     assert(dstarr->rows == srcarr->cols);
 
     cnCopy(srcarr, dstarr, 0);
-    int info = LAPACKE_dpotrf(LAPACK_ROW_MAJOR, 'L', srcarr->cols, dstarr->data, dstarr->step);
+    int info = LAPACKE_potrf(LAPACK_ROW_MAJOR, 'L', srcarr->cols, dstarr->data, dstarr->step);
     for(int i = 0;i < dstarr->cols;i++) {
         for(int j = i + 1;j < dstarr->cols;j++) {
             cnMatrixSet(dstarr, i, j, 0);

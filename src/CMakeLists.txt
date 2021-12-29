@@ -55,8 +55,11 @@ endif()
 add_library(cnmatrix STATIC ${CN_MATRIX_SRCS})
 target_include_directories(cnmatrix PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/>
-  $<INSTALL_INTERFACE:include/>
-  )
+  $<INSTALL_INTERFACE:include/>)
+
+if(USE_SINGLE_PRECISION)
+  target_compile_definitions(cnmatrix PUBLIC CN_USE_FLOAT)
+endif()
 
 set_target_properties(cnmatrix PROPERTIES FOLDER "libraries")
 

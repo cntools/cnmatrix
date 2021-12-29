@@ -19,13 +19,20 @@ jobs:
         use_eigen: [ON]
         build_type: [Release]
         os: [ubuntu-18.04, windows-latest]
+        use_single_precision: [ON, OFF]
         include:
         - os: ubuntu-18.04
           build_type: Debug
-          use_eigen: ON
+          use_eigen: OFF
+          use_single_precision: ON
         - os: ubuntu-18.04
           build_type: Debug
-          use_eigen: OFF
+          use_eigen: ON
+          use_single_precision: ON
+        - os: ubuntu-18.04
+          build_type: Debug
+          use_eigen: ON
+          use_single_precision: OFF
         - os: windows-latest
           build_type: Debug
           use_eigen: ON
@@ -57,7 +64,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DUSE_EIGEN=${{matrix.use_eigen}} -DDOWNLOAD_EIGEN=${{matrix.use_eigen}} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DENABLE_TESTS=ON -DCMAKE_INSTALL_PREFIX=install_root ${{matrix.config_flags}}
+      run: cmake $GITHUB_WORKSPACE -DUSE_EIGEN=${{matrix.use_eigen}} -DDOWNLOAD_EIGEN=${{matrix.use_eigen}} -DUSE_SINGLE_PRECISION=${{matrix.use_single_precision}} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DENABLE_TESTS=ON -DCMAKE_INSTALL_PREFIX=install_root ${{matrix.config_flags}}
 
     - name: Build
       working-directory: ${{runner.workspace}}/build
