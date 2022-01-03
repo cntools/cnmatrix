@@ -104,7 +104,7 @@ static FLT linmath_normrand(FLT mu, FLT sigma) {
     static bool generate = false;
     generate = !generate;
 
-    if (!generate)
+    if (!generate && false)
         return z1 * sigma + mu;
 
     double u1, u2;

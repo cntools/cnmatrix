@@ -31,7 +31,11 @@
 extern "C" {
 static inline FLT cnMatrixGet(const struct CnMat *mat, int row, int col);
 static inline size_t cn_matrix_idx(const struct CnMat *mat, int row, int col);
+#define CN_MATRIX_DEFAULT(x) = (x)
 }
+#endif
+#ifndef CN_MATRIX_DEFAULT
+#define CN_MATRIX_DEFAULT(x)
 #endif
 
 typedef struct CnMat {
@@ -108,7 +112,7 @@ int cnSolve(const CnMat *Aarr, const CnMat *Barr, CnMat *xarr, enum cnInvertMeth
 
 void cnSetZero(CnMat *arr);
 
-void cnCopy(const CnMat *src, CnMat *dest, const CnMat *mask);
+void cnCopy(const CnMat *src, CnMat *dest, const CnMat *mask CN_MATRIX_DEFAULT(0));
 void cnCopyROI(const CnMat *src, CnMat *dest, int start_i, int start_j);
 
 CnMat *cnCloneMat(const CnMat *mat);
@@ -411,5 +415,7 @@ static inline std::vector<std::vector<FLT>> cnMatToVectorVector(const CnMat& m) 
     }
     return vv;
 }
+#define CNMATRIX_INCLUDED_FIRST
+#include <cnmatrix/cn_matrix.hpp>
 
 #endif
