@@ -157,29 +157,55 @@ static void test_invert() {
 	assertFLTEquals(t, 3.);
 	assertFLTEquals(s - t, 0);
 }
-
-static void test_svd() {
+static void test_svd(CnMat* m3x3, CnMat*w,CnMat*u,CnMat*v) {
 	printf("SVD:\n");
 
+	cnSVD(m3x3, w, u, v, CN_SVD_U_T);
+
+	PRINT_MAT(*w);
+	PRINT_MAT(*u);
+	PRINT_MAT(*v);
+
+	CN_CREATE_STACK_MAT(fS, 3, 3);
+	cn_set_diag(&fS, cn_as_const_vector(w));
+	CN_CREATE_STACK_MAT(us, 3, 3);
+	CN_CREATE_STACK_MAT(usvt, 3, 3);
+	cnGEMM(u, &fS, 1, 0, 0, &us, CN_GEMM_FLAG_A_T);
+	cnGEMM(&us, v, 1, 0, 0, &usvt, CN_GEMM_FLAG_B_T);
+
+	print_mat(&usvt);
+	assert(checkMatFLTAEquals(&usvt, m3x3->data));
+	/*
+	 * 0.16489968788789366, 5.6995693010571894e-05, -1.2222549954843702e-05,
+  5.6995693010571894e-05, 0.035984545614046543, -5.7946162138306271e-05, -1.2222549954843702e-05,
+  -5.7946162138306271e-05, 0.0046282902518506412
+	 */
+}
+static void test_svd0() {
 	FLT _3x3[3 * 3] = {1, 2, 3, 4, 5, 6, 7, 8, 12};
 	CnMat m3x3 = cnMat_from_row_major(3, 3, _3x3);
 
-	FLT _w[3] = {0};
-	CnMat w = cnMat_from_row_major(1, 3, _w);
-
-	FLT _u[9] = {0};
-	CnMat u = cnMat_from_row_major(3, 3, _u);
-
-	FLT _v[9] = {0};
-	CnMat v = cnMat_from_row_major(3, 3, _v);
-
-	cnSVD(&m3x3, &w, &u, &v, 0);
-
-	PRINT_MAT(w);
-	PRINT_MAT(u);
-	PRINT_MAT(v);
+	CN_CREATE_STACK_MAT(w, 3, 1);
+	CN_CREATE_STACK_MAT(u, 3, 3);
+	CN_CREATE_STACK_MAT(v, 3, 3);
+	test_svd(&m3x3, &w, &u, &v);
 
 	FLT wgt[] = {18.626945, 0.840495, 0.574865};
+	assertFLTAEquals(cn_as_vector(&w), wgt, 3);
+}
+static void test_svd1() {
+	FLT _3x3[3 * 3] = {0.16489968788789366, 5.6995693010571894e-05, -1.2222549954843702e-05,
+					   5.6995693010571894e-05, 0.035984545614046543, -5.7946162138306271e-05, -1.2222549954843702e-05,
+					   -5.7946162138306271e-05, 0.0046282902518506412};
+	CnMat m3x3 = cnMat_from_row_major(3, 3, _3x3);
+
+	CN_CREATE_STACK_MAT(w, 3, 1);
+	CN_CREATE_STACK_MAT(u, 3, 3);
+	CN_CREATE_STACK_MAT(v, 3, 3);
+	test_svd(&m3x3, &w, &u, &v);
+
+
+	FLT wgt[] = {0.16489971402272774, 0.035984627479101181, 0.0046281822519620109};
 	assertFLTAEquals(cn_as_vector(&w), wgt, 3);
 }
 
@@ -231,7 +257,8 @@ int main()
 	test_invert();
 	test_gemm();
 	test_solve();
-	test_svd();
+	test_svd0();
+	test_svd1();
 	test_multrans();
     test_sym_sqrt();
 	return 0;
