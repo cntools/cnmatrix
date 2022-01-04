@@ -1,6 +1,8 @@
 //#define EIGEN_RUNTIME_NO_MALLOC
 #include "internal.h"
-
+const char* cnMatrixBackend() {
+	return "Eigen";
+}
 double cnInvert(const CnMat *srcarr, CnMat *dstarr, enum cnInvertMethod method) {
 	auto src = CONVERT_TO_EIGEN(srcarr);
 	auto dst = CONVERT_TO_EIGEN(dstarr);

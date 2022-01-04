@@ -562,6 +562,10 @@ SURVIVE_LOCAL_ONLY void cnSVD(CnMat *aarr, CnMat *warr, CnMat *uarr, CnMat *varr
 	}
 }
 
+const char* cnMatrixBackend() {
+	return "BLAS";
+}
+
 SURVIVE_LOCAL_ONLY double cnDet(const CnMat *M) {
 	assert(M->rows == M->cols);
 	assert(M->rows <= 3 && "cnDet unimplemented for matrices >3");

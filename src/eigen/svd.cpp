@@ -10,7 +10,7 @@ extern "C" void cnSVD(CnMat *aarr, CnMat *warr, CnMat *uarr, CnMat *varr, enum c
 	if (varr)
 		options |= Eigen::ComputeFullV;
 	EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(true);
-	auto cnd = aarrEigen.bdcSvd(options);
+	auto cnd = aarrEigen.jacobiSvd(options);
 	EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(false);
 
 	if (warrEigen.cols() == 1) {

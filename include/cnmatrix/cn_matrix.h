@@ -379,6 +379,8 @@ static inline void cn_multiply_scalar(struct CnMat *dst, const struct CnMat *src
 }
 
 CN_EXPORT_FUNCTION void cn_ABAt_add(struct CnMat *out, const struct CnMat *A, const struct CnMat *B, const struct CnMat *C);
+CN_EXPORT_FUNCTION const char* cnMatrixBackend();
+
 
 static inline FLT cn_norm2(const struct CnMat *A) {
 	FLT r = 0;

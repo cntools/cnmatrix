@@ -1,3 +1,4 @@
+#define EIGEN_NO_DEBUG
 
 #include "cnmatrix/cn_matrix.h"
 #include <Eigen/Core>
