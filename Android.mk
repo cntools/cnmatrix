@@ -20,7 +20,7 @@ LOCAL_CFLAGS := \
     -Wno-error=unused-parameter
 
 ifeq ($(SURVIVE_MATH_BACKEND),eigen)
-    LOCAL_SRC_FILES        += src/cn_matrix.eigen.cpp
+    LOCAL_SRC_FILES        += src/eigen/core.cpp src/eigen/gemm.cpp src/eigen/svd.cpp
     LOCAL_CFLAGS           += -DUSE_EIGEN
     LOCAL_HEADER_LIBRARIES += libeigen
 else ifeq ($(SURVIVE_MATH_BACKEND),blas)
