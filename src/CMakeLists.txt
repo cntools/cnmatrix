@@ -1,7 +1,7 @@
 SET(CN_MATRIX_SRCS ../include/cnmatrix/cn_matrix.h cn_matrix.c)
 
 IF(USE_EIGEN)
-  SET(CN_MATRIX_SRCS ${CN_MATRIX_SRCS} eigen/core.cpp eigen/gemm.cpp eigen/svd.cpp)
+  SET(CN_MATRIX_SRCS ${CN_MATRIX_SRCS} eigen/core.cpp eigen/gemm.cpp eigen/svd.cpp eigen/internal.h)
 ELSE()
   SET(CN_MATRIX_SRCS ${CN_MATRIX_SRCS} cn_matrix.blas.c)
 ENDIF()

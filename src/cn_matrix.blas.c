@@ -587,3 +587,11 @@ SURVIVE_LOCAL_ONLY double cnDet(const CnMat *M) {
 		abort();
 	}
 }
+
+// https://fossies.org/linux/OpenBLAS/USAGE.md
+extern void __attribute__ ((__weak__)) openblas_set_num_threads(int);
+void __attribute__((constructor)) force_thread_count() {
+  if(openblas_set_num_threads) {
+    openblas_set_num_threads(1);
+  }
+}
