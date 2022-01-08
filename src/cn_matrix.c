@@ -1,6 +1,7 @@
 #include "cnmatrix/cn_matrix.h"
 #include <limits.h>
 #include <string.h>
+#include <stdio.h>
 
 #ifdef _WIN32
 #define CN_LOCAL_ONLY
