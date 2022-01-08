@@ -205,3 +205,26 @@ void cnCopyROI(const CnMat *src, CnMat *dest, int start_i, int start_j) {
         }
     }
 }
+void cn_print_mat(const CnMat *M) {
+	bool newlines = M->cols > 1;
+	char term = newlines ? '\n' : ' ';
+	if (!M) {
+		fprintf(stdout, "null%c", term);
+		return;
+	}
+	fprintf(stdout, "%2d x %2d:%c", M->rows, M->cols, term);
+
+	for (unsigned i = 0; i < M->rows; i++) {
+		for (unsigned j = 0; j < M->cols; j++) {
+			FLT v = cnMatrixGet(M, i, j);
+			//                         "+1.4963228e-10,
+			if (v == 0)
+				fprintf(stdout, "             0, ");
+			else
+				fprintf(stdout, "%+7.7e, ", v);
+		}
+		if (newlines && M->cols > 1)
+			fprintf(stdout, "\n");
+	}
+	fprintf(stdout, "\n");
+}

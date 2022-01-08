@@ -271,7 +271,16 @@ static inline void cn_set_diag(struct CnMat *m, const FLT *v) {
 		}
 	}
 }
+static inline void cn_add_diag(struct CnMat *m, const CnMat* t, FLT scale) {
+	assert(m->rows == m->cols);
+	assert(m->rows == t->rows);
+	assert(t->cols == 1);
+	for (int i = 0; i < m->rows; i++) {
+		cnMatrixSet(m, i, i, cnMatrixGet(m, i, i) + cn_as_const_vector(t)[i] * scale);
+	}
+}
 
+CN_EXPORT_FUNCTION void cn_print_mat(const CnMat* M);
 static inline void cn_set_diag_val(struct CnMat *m, FLT v) {
 	for (int i = 0; i < m->rows; i++) {
 		for (int j = 0; j < m->cols; j++) {
