@@ -81,10 +81,6 @@ FLT cnDot(const CnMat* a, const CnMat* b) {
   return rtn;
 }
 
-static inline FLT linmath_max(FLT x, FLT y) { return x > y ? x : y; }
-static inline int linmath_imax(int x, int y) { return x > y ? x : y; }
-
-static inline FLT linmath_min(FLT x, FLT y) { return x < y ? x : y; }
 static inline int linmath_imin(int x, int y) { return x < y ? x : y; }
 
 void cnCopy(const CnMat *src, CnMat *dest, const CnMat *mask) {
@@ -144,10 +140,6 @@ CN_LOCAL_ONLY void cnReleaseMat(CnMat **mat) {
 /* the alignment of all the allocated buffers */
 #define CN_MALLOC_ALIGN 16
 CN_LOCAL_ONLY void *cnAlloc(size_t size) { return malloc(size); }
-static inline void *cnAlignPtr(const void *ptr, int align) {
-	assert((align & (align - 1)) == 0);
-	return (void *)(((size_t)ptr + align - 1) & ~(size_t)(align - 1));
-}
 
 CN_LOCAL_ONLY void cnCreateData(CnMat *arr) {
   size_t step;
