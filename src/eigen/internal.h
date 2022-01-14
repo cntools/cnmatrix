@@ -3,13 +3,7 @@
 
 #include "cnmatrix/cn_matrix.h"
 #include <Eigen/Core>
-#include <Eigen/LU>
-#include <Eigen/QR>
-#include <Eigen/SVD>
-
-#include <iostream>
-#include <cnmatrix/cn_matrix.h>
-
+#include <Eigen/Dense>
 
 #ifdef EIGEN_RUNTIME_NO_MALLOC
 #define EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(v) EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(v)

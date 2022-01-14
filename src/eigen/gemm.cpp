@@ -10,6 +10,25 @@ extern "C" void cnGEMM(const CnMat *_src1, const CnMat *_src2, double alpha, con
 	//assert(_src2->data != _src1->data);
 	assert(_src2->data != _dst->data);
 	assert(_src1->data != _dst->data);
+
+	int rows1 = (tABC & CN_GEMM_FLAG_A_T) ? _src1->cols : _src1->rows;
+	int cols1 = (tABC & CN_GEMM_FLAG_A_T) ? _src1->rows : _src1->cols;
+
+	int rows2 = (tABC & CN_GEMM_FLAG_B_T) ? _src2->cols : _src2->rows;
+	int cols2 = (tABC & CN_GEMM_FLAG_B_T) ? _src2->rows : _src2->cols;
+
+	if (_src3) {
+		int rows3 = (tABC & CN_GEMM_FLAG_C_T) ? _src3->cols : _src3->rows;
+		int cols3 = (tABC & CN_GEMM_FLAG_C_T) ? _src3->rows : _src3->cols;
+		assert(rows3 == _dst->rows);
+		assert(cols3 == _dst->cols);
+	}
+
+	// assert(src3 == 0 || beta != 0);
+	assert(cols1 == rows2);
+	assert(rows1 == _dst->rows);
+	assert(cols2 == _dst->cols);
+
 	auto src1 = CONVERT_TO_EIGEN(_src1);
 	auto src2 = CONVERT_TO_EIGEN(_src2);
 
