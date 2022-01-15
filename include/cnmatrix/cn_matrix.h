@@ -258,6 +258,10 @@ type, and it checks for the row and column ranges only in debug mode.
 static inline void cnMatrixSet(CnMat *mat, int row, int col, FLT value) {
 	mat->data[cn_matrix_idx(mat, row, col)] = value;
 }
+static inline void cnMatrixOptionalSet(CnMat *mat, int row, int col, FLT value) {
+	if(row >= mat->rows || col >= mat->cols) return;
+	cnMatrixSet(mat, row, col, value);
+}
 
 static inline void cn_get_diag(const struct CnMat *m, FLT *v, size_t cnt) {
 	for (size_t i = 0; i < cnt; i++) {

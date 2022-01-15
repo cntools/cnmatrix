@@ -8,8 +8,12 @@ double cnInvert(const CnMat *srcarr, CnMat *dstarr, enum cnInvertMethod method) 
 	auto src = CONVERT_TO_EIGEN(srcarr);
 	auto dst = CONVERT_TO_EIGEN(dstarr);
 
+	assert(srcarr->rows == dstarr->cols);
+	assert(srcarr->cols == dstarr->rows);
+
 	EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(false);
 	if (method == CN_INVERT_METHOD_LU) {
+		assert(srcarr->rows == srcarr->cols);
 		dst.noalias() = src.inverse();
 	} else {
 		dst.noalias() = src.completeOrthogonalDecomposition().pseudoInverse();
