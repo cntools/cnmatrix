@@ -234,6 +234,12 @@ static inline size_t cn_matrix_idx(const CnMat *mat, int row, int col) {
 #endif
 }
 
+static inline CnMat cnMatView(int rows, int cols, CnMat* V, int r0, int c0) {
+	CnMat rtn = cnMat(rows, cols, cn_matrix_idx(V, r0, c0) + V->data);
+	rtn.step = V->step;
+	return rtn;
+}
+
 /*
 The function is a fast replacement for cvGetReal2D in the case of single-channel floating-point
 matrices. It is faster because it is inline, it does fewer checks for array type and array element
@@ -275,6 +281,19 @@ static inline void cn_set_diag(struct CnMat *m, const FLT *v) {
 		}
 	}
 }
+
+static inline bool cn_is_symmetrical(const struct CnMat *m) {
+	if(m->rows != m->cols) return false;
+
+	for (int i = 0; i < m->rows; i++) {
+		for (int j = 0; j < i; j++) {
+			if(cnMatrixGet(m, i, j) != cnMatrixGet(m, j, i))
+				return false;
+		}
+	}
+	return true;
+}
+
 static inline void cn_add_diag(struct CnMat *m, const CnMat* t, FLT scale) {
 	assert(m->rows == m->cols);
 	assert(m->rows == t->rows);
