@@ -235,9 +235,15 @@ static inline size_t cn_matrix_idx(const CnMat *mat, int row, int col) {
 }
 
 static inline CnMat cnMatView(int rows, int cols, CnMat* V, int r0, int c0) {
+    cn_matrix_idx(V, r0, c0);
+    cn_matrix_idx(V, r0 + rows - 1, c0 + cols - 1);
 	CnMat rtn = cnMat(rows, cols, cn_matrix_idx(V, r0, c0) + V->data);
 	rtn.step = V->step;
 	return rtn;
+}
+
+static inline const CnMat cnMatConstView(int rows, int cols, const CnMat* V, int r0, int c0) {
+    return cnMatView(rows, cols, (CnMat*)V, r0, c0);
 }
 
 /*

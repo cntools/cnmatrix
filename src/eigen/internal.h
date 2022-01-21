@@ -1,5 +1,5 @@
 #define EIGEN_NO_DEBUG
-#pragma GCC optimize ("O3")
+//#pragma GCC optimize ("O3")
 
 #include "cnmatrix/cn_matrix.h"
 #include <Eigen/Core>
@@ -16,6 +16,7 @@ typedef Eigen::Matrix<FLT, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor, 50, 
 #else
 typedef Eigen::Matrix<FLT, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor, 50, 50> MatrixType;
 #endif
-typedef Eigen::Map<MatrixType> MapType;
+typedef Eigen::OuterStride<> StrideType;
+typedef Eigen::Map<MatrixType, 0, StrideType> MapType;
 
-#define CONVERT_TO_EIGEN(A) MapType(A ? CN_FLT_PTR(A) : 0, A ? (A)->rows : 0, A ? (A)->cols : 0)
+#define CONVERT_TO_EIGEN(A) MapType(A ? CN_FLT_PTR(A) : 0, A ? (A)->rows : 0, A ? (A)->cols : 0, StrideType(A ? (A)->step : 0))

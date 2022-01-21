@@ -128,6 +128,7 @@ void mulBABt(const CnMat *src1, const CnMat *src2, double alpha, const CnMat *sr
 #endif
 	CN_FREE_STACK_MAT(tmp);
 }
+
 // dst = alpha * src1 * src2 + beta * src3
 SURVIVE_LOCAL_ONLY void cnGEMM(const CnMat *src1, const CnMat *src2, double alpha, const CnMat *src3, double beta,
 							   CnMat *dst, enum cnGEMMFlags tABC) {
@@ -150,8 +151,8 @@ SURVIVE_LOCAL_ONLY void cnGEMM(const CnMat *src1, const CnMat *src2, double alph
 	assert(rows1 == dst->rows);
 	assert(cols2 == dst->cols);
 
-	lapack_int lda = src1->cols;
-	lapack_int ldb = src2->cols;
+	lapack_int lda = src1->step;
+	lapack_int ldb = src2->step;
 
 	if (src3)
 		cnCopy(src3, dst, 0);
@@ -163,7 +164,7 @@ SURVIVE_LOCAL_ONLY void cnGEMM(const CnMat *src1, const CnMat *src2, double alph
 	assert(dst->cols > 0);
 	cblas_gemm(CblasRowMajor, (tABC & CN_GEMM_FLAG_A_T) ? CblasTrans : CblasNoTrans,
 			   (tABC & CN_GEMM_FLAG_B_T) ? CblasTrans : CblasNoTrans, dst->rows, dst->cols, cols1, alpha,
-			   CN_RAW_PTR(src1), lda, CN_RAW_PTR(src2), ldb, beta, CN_RAW_PTR(dst), dst->cols);
+			   CN_RAW_PTR(src1), lda, CN_RAW_PTR(src2), ldb, beta, CN_RAW_PTR(dst), dst->step);
 }
 
 // dst = scale * src ^ t * src     iff order == 1
@@ -291,7 +292,7 @@ SURVIVE_LOCAL_ONLY double cnInvert(const CnMat *srcarr, CnMat *dstarr, enum cnIn
 	lapack_int inf;
 	lapack_int rows = srcarr->rows;
 	lapack_int cols = srcarr->cols;
-	lapack_int lda = srcarr->cols;
+	lapack_int lda = srcarr->step;
 
 	cnCopy(srcarr, dstarr, 0);
 	FLT *a = CN_RAW_PTR(dstarr);
@@ -326,8 +327,6 @@ SURVIVE_LOCAL_ONLY double cnInvert(const CnMat *srcarr, CnMat *dstarr, enum cnIn
 		// free(ipiv);
 
 	} else if (method == DECOMP_SVD) {
-		// TODO: There is no way this needs this many allocations,
-		// but in my defense I was very tired when I wrote this code
 		CN_CREATE_STACK_MAT(w, 1, MIN(dstarr->rows, dstarr->cols));
 		CN_CREATE_STACK_MAT(u, dstarr->cols, dstarr->cols);
 		CN_CREATE_STACK_MAT(v, dstarr->rows, dstarr->rows);
@@ -341,12 +340,10 @@ SURVIVE_LOCAL_ONLY double cnInvert(const CnMat *srcarr, CnMat *dstarr, enum cnIn
 				cnMatrixSet(&um, i, i, 1. / (_w)[i]);
 		}
 
-		CnMat *tmp = cnCreateMat(dstarr->cols, dstarr->rows);
-		cnGEMM(&v, &um, 1, 0, 0, tmp, CN_GEMM_FLAG_A_T);
-		cnGEMM(tmp, &u, 1, 0, 0, dstarr, CN_GEMM_FLAG_B_T);
+        CN_CREATE_STACK_MAT(tmp, dstarr->cols, dstarr->rows);
 
-		free(tmp->data);
-		cnReleaseMat(&tmp);
+		cnGEMM(&v, &um, 1, 0, 0, &tmp, 0);
+		cnGEMM(&tmp, &u, 1, 0, 0, dstarr, CN_GEMM_FLAG_B_T);
 
 		CN_FREE_STACK_MAT(um);
 		CN_FREE_STACK_MAT(v);
@@ -531,8 +528,8 @@ SURVIVE_LOCAL_ONLY void cnSVD(CnMat *aarr, CnMat *warr, CnMat *uarr, CnMat *varr
 	FLT *pu = uarr ? CN_RAW_PTR(uarr) : (FLT *)CALLOCA(sizeof(FLT) * arows * arows);
 	FLT *pv = varr ? CN_RAW_PTR(varr) : (FLT *)CALLOCA(sizeof(FLT) * acols * acols);
 
-	lapack_int ulda = uarr ? uarr->cols : acols;
-	lapack_int plda = varr ? varr->cols : acols;
+	lapack_int ulda = uarr ? uarr->step : aarr->step;
+	lapack_int plda = varr ? varr->step : aarr->step;
 
 	FLT *superb = CALLOCA(sizeof(FLT) * MIN(arows, acols));
 	inf = LAPACKE_gesvd_static_alloc(LAPACK_ROW_MAJOR, jobu, jobvt, arows, acols, CN_RAW_PTR(aarr), acols, pw, pu, ulda,

@@ -1,25 +1,43 @@
 #include "internal.h"
 
-extern "C" void cnGEMM(const CnMat *_src1, const CnMat *_src2, double alpha, const CnMat *_src3, double beta,
+#define LOCAL_COPY(dst, src) \
+{                            \
+(dst) = *(src);                             \
+(dst).step = (dst).cols;         \
+(dst).data = (FLT*)alloca(sizeof(FLT) * (src)->rows * (src)->cols); \
+cnCopy(src, &(dst), 0);      \
+}\
+
+#define LOCAL_COPY_IF_ALIAS(dst, src) if((dst).data == (src)->data) {LOCAL_COPY(dst, src);}
+
+extern "C" void cnGEMM(const CnMat *_src1tmp, const CnMat *_src2tmp, double alpha, const CnMat *_src3tmp, double beta,
 					   CnMat *_dst, enum cnGEMMFlags tABC) {
-	if (_src3) {
-		assert(_src3->data != _src2->data);
-		assert(_src3->data != _src1->data);
-		assert(_src3->data != _dst->data);
+    CnMat _src1 = *_src1tmp;
+    CnMat _src2 = *_src2tmp;
+    CnMat _src3 = { };
+	if (_src3tmp) {
+        _src3 = *_src3tmp;
+		//assert(_src3->data != _src2->data);
+		//assert(_src3->data != _src1->data);
+        LOCAL_COPY_IF_ALIAS(_src3, _dst);
+		//assert(_src3->data != _dst->data);
 	}
 	//assert(_src2->data != _src1->data);
-	assert(_src2->data != _dst->data);
-	assert(_src1->data != _dst->data);
+	//assert(_src2->data != _dst->data);
+	//assert(_src1->data != _dst->data);
 
-	int rows1 = (tABC & CN_GEMM_FLAG_A_T) ? _src1->cols : _src1->rows;
-	int cols1 = (tABC & CN_GEMM_FLAG_A_T) ? _src1->rows : _src1->cols;
+    LOCAL_COPY_IF_ALIAS(_src1, _dst);
+    LOCAL_COPY_IF_ALIAS(_src2, _dst);
 
-	int rows2 = (tABC & CN_GEMM_FLAG_B_T) ? _src2->cols : _src2->rows;
-	int cols2 = (tABC & CN_GEMM_FLAG_B_T) ? _src2->rows : _src2->cols;
+	int rows1 = (tABC & CN_GEMM_FLAG_A_T) ? _src1.cols : _src1.rows;
+	int cols1 = (tABC & CN_GEMM_FLAG_A_T) ? _src1.rows : _src1.cols;
 
-	if (_src3) {
-		int rows3 = (tABC & CN_GEMM_FLAG_C_T) ? _src3->cols : _src3->rows;
-		int cols3 = (tABC & CN_GEMM_FLAG_C_T) ? _src3->rows : _src3->cols;
+	int rows2 = (tABC & CN_GEMM_FLAG_B_T) ? _src2.cols : _src2.rows;
+	int cols2 = (tABC & CN_GEMM_FLAG_B_T) ? _src2.rows : _src2.cols;
+
+	if (_src3.data) {
+		int rows3 = (tABC & CN_GEMM_FLAG_C_T) ? _src3.cols : _src3.rows;
+		int cols3 = (tABC & CN_GEMM_FLAG_C_T) ? _src3.rows : _src3.cols;
 		assert(rows3 == _dst->rows);
 		assert(cols3 == _dst->cols);
 	}
@@ -29,8 +47,8 @@ extern "C" void cnGEMM(const CnMat *_src1, const CnMat *_src2, double alpha, con
 	assert(rows1 == _dst->rows);
 	assert(cols2 == _dst->cols);
 
-	auto src1 = CONVERT_TO_EIGEN(_src1);
-	auto src2 = CONVERT_TO_EIGEN(_src2);
+	auto src1 = CONVERT_TO_EIGEN(&_src1);
+	auto src2 = CONVERT_TO_EIGEN(&_src2);
 
 	auto dst = CONVERT_TO_EIGEN(_dst);
 
@@ -47,8 +65,8 @@ extern "C" void cnGEMM(const CnMat *_src1, const CnMat *_src2, double alpha, con
 			dst.noalias() = alpha * src1 * src2;
 	}
 
-	if (_src3) {
-		auto src3 = CONVERT_TO_EIGEN(_src3);
+	if (_src3.data) {
+		auto src3 = CONVERT_TO_EIGEN(&_src3);
 		if (tABC & CN_GEMM_FLAG_C_T)
 			dst.noalias() += beta * src3.transpose();
 		else

@@ -85,7 +85,7 @@ static inline int linmath_imin(int x, int y) { return x < y ? x : y; }
 
 void cnCopy(const CnMat *src, CnMat *dest, const CnMat *mask) {
   assert(mask == 0 && "This isn't implemented yet");
-  if (src->rows == dest->rows && src->cols == dest->cols) {
+  if (src->rows == dest->rows && src->cols == dest->cols && src->cols == src->step && dest->cols == dest->step) {
     memcpy(CN_RAW_PTR(dest), CN_RAW_PTR(src), mat_size_bytes(src));
   } else {
     for (int i = 0; i < linmath_imin(src->rows, dest->rows); i++)
@@ -142,31 +142,24 @@ CN_LOCAL_ONLY void cnReleaseMat(CnMat **mat) {
 CN_LOCAL_ONLY void *cnAlloc(size_t size) { return malloc(size); }
 
 CN_LOCAL_ONLY void cnCreateData(CnMat *arr) {
-  size_t step;
+  size_t step = arr->step;
 	CnMat *mat = (CnMat *)arr;
-	step = mat->step;
 
 	if (mat->rows == 0 || mat->cols == 0)
 		return;
 
 	if (CN_FLT_PTR(mat) != 0)
 		CN_Error(CN_StsError, "Data is already allocated");
+    assert(step != 0);
 
-	if (step == 0)
-		step = sizeof(FLT) * mat->cols;
-
-	int64_t total_size = (int64_t)step * mat->rows;
+	int64_t total_size = (int64_t)step * mat->rows * sizeof(FLT);
 	mat->data = (FLT *)cnAlloc(total_size);
 }
 
 CnMat *cnInitMatHeader(CnMat *arr, int rows, int cols) {
 	assert(!(rows < 0 || cols < 0));
 
-	int min_step = sizeof(FLT);
-	assert(!(min_step <= 0));
-	min_step *= cols;
-
-	arr->step = min_step;
+	arr->step = cols;
 	arr->rows = rows;
 	arr->cols = cols;
 	arr->data = 0;
@@ -187,7 +180,7 @@ CN_LOCAL_ONLY CnMat *cnCreateMat(int height, int width) {
 inline void cn_ABAt_add(struct CnMat *out, const struct CnMat *A, const struct CnMat *B, const struct CnMat *C) {
 	CN_CREATE_STACK_MAT(tmp, A->rows, B->cols);
 	cnGEMM(A, B, 1, 0, 0, &tmp, 0);
-	cnGEMM(&tmp, A, 1, C, 1, out, CN_GEMM_FLAG_B_T);
+    cnGEMM(&tmp, A, 1, C, 1, out, CN_GEMM_FLAG_B_T);
 	CN_FREE_STACK_MAT(tmp);
 }
 

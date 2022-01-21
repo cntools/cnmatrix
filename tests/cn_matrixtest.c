@@ -102,7 +102,13 @@ void test_gemm() {
 		9.000000, 19.000000, 29.000000, 12.000000, 26.000000, 40.000000, 15.000000, 33.000000, 51.000000,
 	};
 	assert(checkMatFLTAEquals(&m3x3, m3x3_gt) < 0);
-	PRINT_MAT(m3x3);
+    PRINT_MAT(m3x3);
+
+    FLT alias_gt[] = {1368,    2972,    4576, 2958,    6430,    9902, 4548,    9888,   15228};
+    cnGEMM(&m3x3, &m3x3, 3, &m3x3, 2, &m3x3, CN_GEMM_FLAG_A_T);
+    PRINT_MAT(m3x3);
+    assert(checkMatFLTAEquals(&m3x3, alias_gt) < 0);
+
 }
 
 static void test_solve() {
@@ -157,6 +163,60 @@ static void test_invert() {
 	assertFLTEquals(t, 3.);
 	assertFLTEquals(s - t, 0);
 }
+static void test_invert2() {
+    FLT _P[] = {+1.4192384e-03, +8.9898875e-06,              0, +9.7868476e-03, +4.2227069e-05,              0, +4.3565721e-10, +7.8105213e-09,
+                +8.9898875e-06, +1.4821856e-03, +1.4099495e-09, +4.2254865e-05, +1.0083015e-02,              0,              0, +7.9221930e-06,
+                0, +1.4099495e-09, +1.0021303e-07,              0, +2.1108031e-08, +9.9999912e-08,              0, +3.1559669e-07,
+                +9.7868476e-03, +4.2254865e-05,              0, +1.4500066e-01, +2.9311173e-04,              0, +9.9479136e-08, +8.8850986e-08,
+                +4.2227069e-05, +1.0083015e-02, +2.1108031e-08, +2.9311173e-04, +1.4712435e-01,              0,              0, +4.5619949e-04,
+                0,              0, +9.9999912e-08,              0,              0, +1.0001000e-01,              0, +1.7626956e-10,
+                +4.3565721e-10,              0,              0, +9.9479136e-08,              0,              0, +1.0009992e-02,              0,
+                +7.8105213e-09, +7.9221930e-06, +3.1559669e-07, +8.8850986e-08, +4.5619949e-04, +1.7626956e-10,              0, +2.7158585e-02,};
+    CnMat P = cnMat_from_row_major(8, 8, _P);
+    CN_CREATE_STACK_MAT(iP, 8, 8);
+    cnInvert(&P, &iP, CN_INVERT_METHOD_SVD);
+    CN_CREATE_STACK_MAT(I, 8,8);
+    cn_set_diag_val(&I, 1);
+
+    CN_CREATE_STACK_MAT(should_be_I, 8, 8);
+    cnGEMM(&P, &iP, 1, 0, 0, &should_be_I, 0);
+
+    assert(checkMatFLTAEquals(&I, should_be_I.data));
+
+    print_mat(&I);
+    print_mat(&P);
+    print_mat(&iP);
+}
+static void test_invert3() {
+    FLT _P[] = {+1.4192384e-03, +8.9898875e-06,              0, +9.7868476e-03, +4.2227069e-05,              0, +4.3565721e-10, +7.8105213e-09,
+                +8.9898875e-06, +1.4821856e-03, +1.4099495e-09, +4.2254865e-05, +1.0083015e-02,              0,              0, +7.9221930e-06,
+                0, +1.4099495e-09, +1.0021303e-07,              0, +2.1108031e-08, +9.9999912e-08,              0, +3.1559669e-07,
+                +9.7868476e-03, +4.2254865e-05,              0, +1.4500066e-01, +2.9311173e-04,              0, +9.9479136e-08, +8.8850986e-08,
+                +4.2227069e-05, +1.0083015e-02, +2.1108031e-08, +2.9311173e-04, +1.4712435e-01,              0,              0, +4.5619949e-04,
+                0,              0, +9.9999912e-08,              0,              0, +1.0001000e-01,              0, +1.7626956e-10,
+                +4.3565721e-10,              0,              0, +9.9479136e-08,              0,              0, +1.0009992e-02,              0,
+                +7.8105213e-09, +7.9221930e-06, +3.1559669e-07, +8.8850986e-08, +4.5619949e-04, +1.7626956e-10,              0, +2.7158585e-02,};
+
+    CnMat LittleP = cnMat_from_row_major(8, 8, _P);
+    CN_CREATE_STACK_MAT(BigP, 16, 16);
+    CnMat P = cnMatView(8, 8, &BigP, 8, 8);
+    cnCopy(&LittleP, &P, 0);
+    assertFLTEquals(_P[0], cnMatrixGet(&BigP, 8, 8));
+
+    CnMat iP = cnMatView(8, 8, &BigP, 0, 0);
+    cnInvert(&P, &iP, CN_INVERT_METHOD_SVD);
+    CN_CREATE_STACK_MAT(I, 8,8);
+    cn_set_diag_val(&I, 1);
+
+    CnMat should_be_I = cnMatView(8, 8, &BigP, 8, 0);
+    cnGEMM(&P, &iP, 1, 0, 0, &should_be_I, 0);
+
+    assert(checkMatFLTAEquals(&I, should_be_I.data));
+
+    print_mat(&I);
+    print_mat(&P);
+    print_mat(&iP);
+}
 static void test_svd(CnMat* m3x3, CnMat*w,CnMat*u,CnMat*v) {
 	printf("SVD:\n");
 
@@ -166,15 +226,16 @@ static void test_svd(CnMat* m3x3, CnMat*w,CnMat*u,CnMat*v) {
 	PRINT_MAT(*u);
 	PRINT_MAT(*v);
 
-	CN_CREATE_STACK_MAT(fS, 3, 3);
+	CN_CREATE_STACK_MAT(fS, w->rows, w->rows);
 	cn_set_diag(&fS, cn_as_const_vector(w));
-	CN_CREATE_STACK_MAT(us, 3, 3);
-	CN_CREATE_STACK_MAT(usvt, 3, 3);
+	CN_CREATE_STACK_MAT(us, w->rows, w->rows);
+	CN_CREATE_STACK_MAT(usvt, w->rows, w->rows);
 	cnGEMM(u, &fS, 1, 0, 0, &us, CN_GEMM_FLAG_A_T);
 	cnGEMM(&us, v, 1, 0, 0, &usvt, CN_GEMM_FLAG_B_T);
 
-	print_mat(&usvt);
-	assert(checkMatFLTAEquals(&usvt, m3x3->data));
+    print_mat(&us);
+    print_mat(&usvt);
+    assert(checkMatFLTAEquals(&usvt, m3x3->data));
 	/*
 	 * 0.16489968788789366, 5.6995693010571894e-05, -1.2222549954843702e-05,
   5.6995693010571894e-05, 0.035984545614046543, -5.7946162138306271e-05, -1.2222549954843702e-05,
@@ -197,7 +258,7 @@ static void test_svd1() {
 	FLT _3x3[3 * 3] = {0.16489968788789366, 5.6995693010571894e-05, -1.2222549954843702e-05,
 					   5.6995693010571894e-05, 0.035984545614046543, -5.7946162138306271e-05, -1.2222549954843702e-05,
 					   -5.7946162138306271e-05, 0.0046282902518506412};
-	CnMat m3x3 = cnMat_from_row_major(3, 3, _3x3);
+    CnMat m3x3 = cnMat_from_row_major(3, 3, _3x3);
 
 	CN_CREATE_STACK_MAT(w, 3, 1);
 	CN_CREATE_STACK_MAT(u, 3, 3);
@@ -208,7 +269,32 @@ static void test_svd1() {
 	FLT wgt[] = {0.16489971402272774, 0.035984627479101181, 0.0046281822519620109};
 	assertFLTAEquals(cn_as_vector(&w), wgt, 3);
 }
+static void test_svd2() {
+    FLT _P[] = {+1.4192384e-03, +8.9898875e-06,              0, +9.7868476e-03, +4.2227069e-05,              0, +4.3565721e-10, +7.8105213e-09,
+                +8.9898875e-06, +1.4821856e-03, +1.4099495e-09, +4.2254865e-05, +1.0083015e-02,              0,              0, +7.9221930e-06,
+                0, +1.4099495e-09, +1.0021303e-07,              0, +2.1108031e-08, +9.9999912e-08,              0, +3.1559669e-07,
+                +9.7868476e-03, +4.2254865e-05,              0, +1.4500066e-01, +2.9311173e-04,              0, +9.9479136e-08, +8.8850986e-08,
+                +4.2227069e-05, +1.0083015e-02, +2.1108031e-08, +2.9311173e-04, +1.4712435e-01,              0,              0, +4.5619949e-04,
+                0,              0, +9.9999912e-08,              0,              0, +1.0001000e-01,              0, +1.7626956e-10,
+                +4.3565721e-10,              0,              0, +9.9479136e-08,              0,              0, +1.0009992e-02,              0,
+                +7.8105213e-09, +7.9221930e-06, +3.1559669e-07, +8.8850986e-08, +4.5619949e-04, +1.7626956e-10,              0, +2.7158585e-02};
+    CnMat P = cnMat_from_row_major(8, 8, _P);
 
+
+    CN_CREATE_STACK_MAT(w, 8, 1);
+    CN_CREATE_STACK_MAT(u, 8, 8);
+    CN_CREATE_STACK_MAT(v, 8, 8);
+    test_svd(&P, &w, &u, &v);
+
+    FLT wgt[] = {1.4786e-01,
+            1.4562e-01,
+            1.0001e-01,
+            2.7157e-02,
+            1.0010e-02,
+            7.8805e-04,
+            1.0021e-07};
+    assertFLTAEquals(cn_as_vector(&w), wgt, 8);
+}
 static void test_multrans() {
 	FLT _A[3] = {1, 2, 3};
 	CnMat A = cnMat(3, 1, _A);
@@ -254,11 +340,15 @@ static void test_sym_sqrt() {
 
 int main()
 {
+    test_svd2();
 	test_invert();
+    test_invert2();
+    test_invert3();
 	test_gemm();
 	test_solve();
 	test_svd0();
 	test_svd1();
+
 	test_multrans();
     test_sym_sqrt();
 	return 0;
