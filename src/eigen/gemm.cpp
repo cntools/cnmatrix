@@ -37,10 +37,10 @@ extern "C" void cnGEMM(const CnMat *_src1tmp, const CnMat *_src2tmp, double alph
 	assert(rows1 == _dst->rows);
 	assert(cols2 == _dst->cols);
 
-	auto src1 = CONVERT_TO_EIGEN(&_src1);
-	auto src2 = CONVERT_TO_EIGEN(&_src2);
+	auto src1 = CONVERT_TO_EIGEN(_src1);
+	auto src2 = CONVERT_TO_EIGEN(_src2);
 
-	auto dst = CONVERT_TO_EIGEN(_dst);
+	auto dst = CONVERT_TO_EIGEN_PTR(_dst);
 
 	EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(false);
 	if (tABC & CN_GEMM_FLAG_A_T)
@@ -56,7 +56,7 @@ extern "C" void cnGEMM(const CnMat *_src1tmp, const CnMat *_src2tmp, double alph
 	}
 
 	if (_src3.data) {
-		auto src3 = CONVERT_TO_EIGEN(&_src3);
+		auto src3 = CONVERT_TO_EIGEN(_src3);
 		if (tABC & CN_GEMM_FLAG_C_T)
 			dst.noalias() += beta * src3.transpose();
 		else

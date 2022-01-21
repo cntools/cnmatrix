@@ -19,4 +19,5 @@ typedef Eigen::Matrix<FLT, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor, 50, 
 typedef Eigen::OuterStride<> StrideType;
 typedef Eigen::Map<MatrixType, 0, StrideType> MapType;
 
-#define CONVERT_TO_EIGEN(A) MapType(A ? CN_FLT_PTR(A) : 0, A ? (A)->rows : 0, A ? (A)->cols : 0, StrideType(A ? (A)->step : 0))
+#define CONVERT_TO_EIGEN(A) MapType(CN_FLT_PTR(&A), (A).rows, (A).cols, StrideType((A).step))
+#define CONVERT_TO_EIGEN_PTR(A) (A ? CONVERT_TO_EIGEN(*A) : MapType(0, 0, 0, StrideType(0)))

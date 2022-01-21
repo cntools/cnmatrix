@@ -5,19 +5,19 @@ const char* cnMatrixBackend() {
 }
 
 void cnSqRootSymmetric(const CnMat *srcarr, CnMat *dstarr) {
-    auto src = CONVERT_TO_EIGEN(srcarr);
-    auto dst = CONVERT_TO_EIGEN(dstarr);
+    auto src = CONVERT_TO_EIGEN_PTR(srcarr);
+    auto dst = CONVERT_TO_EIGEN_PTR(dstarr);
 
     EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(false);
     dst.noalias() = Eigen::LLT<MatrixType>(src).matrixL().toDenseMatrix();
 }
 
 void cnMulTransposed(const CnMat *src, CnMat *dst, int order, const CnMat *delta, double scale) {
-	auto srcEigen = CONVERT_TO_EIGEN(src);
-	auto dstEigen = CONVERT_TO_EIGEN(dst);
+	auto srcEigen = CONVERT_TO_EIGEN_PTR(src);
+	auto dstEigen = CONVERT_TO_EIGEN_PTR(dst);
 
 	if (delta) {
-		auto deltaEigen = CONVERT_TO_EIGEN(delta);
+		auto deltaEigen = CONVERT_TO_EIGEN_PTR(delta);
 		if (order == 0)
 			dstEigen.noalias() = scale * (srcEigen - deltaEigen) * (srcEigen - deltaEigen).transpose();
 		else
@@ -31,8 +31,8 @@ void cnMulTransposed(const CnMat *src, CnMat *dst, int order, const CnMat *delta
 }
 
 void cnTranspose(const CnMat *M, CnMat *dst) {
-	auto src = CONVERT_TO_EIGEN(M);
-	auto dstEigen = CONVERT_TO_EIGEN(dst);
+	auto src = CONVERT_TO_EIGEN_PTR(M);
+	auto dstEigen = CONVERT_TO_EIGEN_PTR(dst);
 	if (CN_FLT_PTR(M) == CN_FLT_PTR(dst))
 		dstEigen = src.transpose().eval();
 	else
@@ -43,7 +43,7 @@ void print_mat(const CnMat *M);
 
 double cnDet(const CnMat *M) {
 	EIGEN_RUNTIME_SET_IS_MALLOC_ALLOWED(false);
-	auto MEigen = CONVERT_TO_EIGEN(M);
+	auto MEigen = CONVERT_TO_EIGEN_PTR(M);
 	return MEigen.determinant();
 }
 

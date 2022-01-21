@@ -5,8 +5,8 @@
 
 
 double cnInvert(const CnMat *srcarr, CnMat *dstarr, enum cnInvertMethod method) {
-	auto src = CONVERT_TO_EIGEN(srcarr);
-	auto dst = CONVERT_TO_EIGEN(dstarr);
+	auto src = CONVERT_TO_EIGEN_PTR(srcarr);
+	auto dst = CONVERT_TO_EIGEN_PTR(dstarr);
 
 	assert(srcarr->rows == dstarr->cols);
 	assert(srcarr->cols == dstarr->rows);
@@ -22,9 +22,9 @@ double cnInvert(const CnMat *srcarr, CnMat *dstarr, enum cnInvertMethod method) 
 }
 
 extern "C" int cnSolve(const CnMat *_Aarr, const CnMat *_Barr, CnMat *_xarr, enum cnInvertMethod method) {
-	auto Aarr = CONVERT_TO_EIGEN(_Aarr);
-	auto Barr = CONVERT_TO_EIGEN(_Barr);
-	auto xarr = CONVERT_TO_EIGEN(_xarr);
+	auto Aarr = CONVERT_TO_EIGEN_PTR(_Aarr);
+	auto Barr = CONVERT_TO_EIGEN_PTR(_Barr);
+	auto xarr = CONVERT_TO_EIGEN_PTR(_xarr);
 
 	if (method == CN_INVERT_METHOD_LU) {
 		xarr.noalias() = Aarr.partialPivLu().solve(Barr);
@@ -42,8 +42,8 @@ extern "C" int cnSolve(const CnMat *_Aarr, const CnMat *_Barr, CnMat *_xarr, enu
 }
 
 extern "C" void cnSVD(CnMat *aarr, CnMat *warr, CnMat *uarr, CnMat *varr, enum cnSVDFlags flags) {
-	auto aarrEigen = CONVERT_TO_EIGEN(aarr);
-	auto warrEigen = CONVERT_TO_EIGEN(warr);
+	auto aarrEigen = CONVERT_TO_EIGEN_PTR(aarr);
+	auto warrEigen = CONVERT_TO_EIGEN_PTR(warr);
 
 	int options = 0;
 	if (uarr)
@@ -63,7 +63,7 @@ extern "C" void cnSVD(CnMat *aarr, CnMat *warr, CnMat *uarr, CnMat *varr, enum c
 	}
 
 	if (uarr) {
-		auto uarrEigen = CONVERT_TO_EIGEN(uarr);
+		auto uarrEigen = CONVERT_TO_EIGEN_PTR(uarr);
 		if (flags & CN_SVD_U_T)
 			uarrEigen.noalias() = cnd.matrixU().transpose();
 		else
@@ -71,7 +71,7 @@ extern "C" void cnSVD(CnMat *aarr, CnMat *warr, CnMat *uarr, CnMat *varr, enum c
 	}
 
 	if (varr) {
-		auto varrEigen = CONVERT_TO_EIGEN(varr);
+		auto varrEigen = CONVERT_TO_EIGEN_PTR(varr);
 		if (flags & CN_SVD_V_T)
 			varrEigen.noalias() = cnd.matrixV().transpose();
 		else
