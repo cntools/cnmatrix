@@ -1,15 +1,5 @@
 #include "internal.h"
 
-#define LOCAL_COPY(dst, src) \
-{                            \
-(dst) = *(src);                             \
-(dst).step = (dst).cols;         \
-(dst).data = (FLT*)alloca(sizeof(FLT) * (src)->rows * (src)->cols); \
-cnCopy(src, &(dst), 0);      \
-}\
-
-#define LOCAL_COPY_IF_ALIAS(dst, src) if((dst).data == (src)->data) {LOCAL_COPY(dst, src);}
-
 extern "C" void cnGEMM(const CnMat *_src1tmp, const CnMat *_src2tmp, double alpha, const CnMat *_src3tmp, double beta,
 					   CnMat *_dst, enum cnGEMMFlags tABC) {
     CnMat _src1 = *_src1tmp;
@@ -19,15 +9,15 @@ extern "C" void cnGEMM(const CnMat *_src1tmp, const CnMat *_src2tmp, double alph
         _src3 = *_src3tmp;
 		//assert(_src3->data != _src2->data);
 		//assert(_src3->data != _src1->data);
-        LOCAL_COPY_IF_ALIAS(_src3, _dst);
+        CNMATRIX_LOCAL_COPY_IF_ALIAS(_src3, _dst);
 		//assert(_src3->data != _dst->data);
 	}
 	//assert(_src2->data != _src1->data);
 	//assert(_src2->data != _dst->data);
 	//assert(_src1->data != _dst->data);
 
-    LOCAL_COPY_IF_ALIAS(_src1, _dst);
-    LOCAL_COPY_IF_ALIAS(_src2, _dst);
+    CNMATRIX_LOCAL_COPY_IF_ALIAS(_src1, _dst);
+    CNMATRIX_LOCAL_COPY_IF_ALIAS(_src2, _dst);
 
 	int rows1 = (tABC & CN_GEMM_FLAG_A_T) ? _src1.cols : _src1.rows;
 	int cols1 = (tABC & CN_GEMM_FLAG_A_T) ? _src1.rows : _src1.cols;

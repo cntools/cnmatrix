@@ -139,6 +139,12 @@ SURVIVE_LOCAL_ONLY void cnGEMM(const CnMat *src1, const CnMat *src2, double alph
 	int rows2 = (tABC & CN_GEMM_FLAG_B_T) ? src2->cols : src2->rows;
 	int cols2 = (tABC & CN_GEMM_FLAG_B_T) ? src2->rows : src2->cols;
 
+	CnMat src1_local = *src1;
+	CnMat src2_local = *src2;
+
+	CNMATRIX_LOCAL_COPY_IF_ALIAS(src1_local, src1);
+	CNMATRIX_LOCAL_COPY_IF_ALIAS(src2_local, src2);
+
 	if (src3) {
 		int rows3 = (tABC & CN_GEMM_FLAG_C_T) ? src3->cols : src3->rows;
 		int cols3 = (tABC & CN_GEMM_FLAG_C_T) ? src3->rows : src3->cols;
@@ -151,20 +157,18 @@ SURVIVE_LOCAL_ONLY void cnGEMM(const CnMat *src1, const CnMat *src2, double alph
 	assert(rows1 == dst->rows);
 	assert(cols2 == dst->cols);
 
-	lapack_int lda = src1->step;
-	lapack_int ldb = src2->step;
+	lapack_int lda = src1_local.step;
+	lapack_int ldb = src2_local.step;
 
 	if (src3)
 		cnCopy(src3, dst, 0);
 	else
 		beta = 0;
 
-	assert(CN_RAW_PTR(dst) != CN_RAW_PTR(src1));
-	assert(CN_RAW_PTR(dst) != CN_RAW_PTR(src2));
 	assert(dst->cols > 0);
 	cblas_gemm(CblasRowMajor, (tABC & CN_GEMM_FLAG_A_T) ? CblasTrans : CblasNoTrans,
 			   (tABC & CN_GEMM_FLAG_B_T) ? CblasTrans : CblasNoTrans, dst->rows, dst->cols, cols1, alpha,
-			   CN_RAW_PTR(src1), lda, CN_RAW_PTR(src2), ldb, beta, CN_RAW_PTR(dst), dst->step);
+			   CN_RAW_PTR(&src1_local), lda, CN_RAW_PTR(&src2_local), ldb, beta, CN_RAW_PTR(dst), dst->step);
 }
 
 // dst = scale * src ^ t * src     iff order == 1

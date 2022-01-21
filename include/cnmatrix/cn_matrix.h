@@ -432,6 +432,16 @@ static inline CnMat cn_row(struct CnMat *M, int r) {
 }
 #endif
 
+#define CNMATRIX_LOCAL_COPY(dst, src) \
+{                            \
+(dst) = *(src);                             \
+(dst).step = (dst).cols;         \
+(dst).data = (FLT*)alloca(sizeof(FLT) * (src)->rows * (src)->cols); \
+cnCopy(src, &(dst), 0);      \
+}\
+
+#define CNMATRIX_LOCAL_COPY_IF_ALIAS(dst, src) if((dst).data == (src)->data) {CNMATRIX_LOCAL_COPY(dst, src);}
+
 #ifdef __cplusplus
 }
 
