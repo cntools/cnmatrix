@@ -1,5 +1,5 @@
 #define EIGEN_NO_DEBUG
-//#pragma GCC optimize ("O3")
+#pragma GCC optimize ("O3")
 
 #include "cnmatrix/cn_matrix.h"
 #include <Eigen/Core>

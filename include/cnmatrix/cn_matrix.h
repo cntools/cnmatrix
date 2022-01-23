@@ -242,7 +242,7 @@ static inline CnMat cnMatView(int rows, int cols, CnMat* V, int r0, int c0) {
 	return rtn;
 }
 
-static inline const CnMat cnMatConstView(int rows, int cols, const CnMat* V, int r0, int c0) {
+static inline CnMat cnMatConstView(int rows, int cols, const CnMat* V, int r0, int c0) {
     return cnMatView(rows, cols, (CnMat*)V, r0, c0);
 }
 
