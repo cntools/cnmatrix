@@ -157,6 +157,9 @@ SURVIVE_LOCAL_ONLY void cnGEMM(const CnMat *src1, const CnMat *src2, double alph
 	assert(rows1 == dst->rows);
 	assert(cols2 == dst->cols);
 
+	if(dst->rows == 0 || dst->cols == 0)
+		return;
+
 	lapack_int lda = src1_local.step;
 	lapack_int ldb = src2_local.step;
 
