@@ -39,45 +39,59 @@ FLT cnNorm2(const CnMat *s) {
   return r;
 }
 FLT cnNorm(const CnMat *s) { return FLT_SQRT(cnNorm2(s)); }
+
+#define ITER_MATRIX(a, b, expr) \
+	assert(a->cols * a->rows == b->cols * b->rows);\
+	for (int i = 0; i < a->rows; i++) \
+		for (int j = 0; j < a->cols; j++) {              \
+							  FLT A = cnMatrixGet(a, i,j);                 \
+							  FLT B = cnMatrixGet(b, i,j);                 \
+			expr;\
+		}\
+
+#define SET_MATRIX(dst, a, b, expr) \
+	assert(a->cols * a->rows == dest->cols * dest->rows);\
+	assert(b->cols * b->rows == dest->cols * dest->rows);\
+	for (int i = 0; i < dest->rows; i++) \
+		for (int j = 0; j < dest->cols; j++) {              \
+							  FLT A = cnMatrixGet(a, i,j);                 \
+							  FLT B = cnMatrixGet(b, i,j);                 \
+			cnMatrixSet(dst, i, j, expr);\
+		}\
+
+#define SET_MATRIX_UNARY(dst, a, expr) \
+	assert(a->cols * a->rows == dest->cols * dest->rows);\
+	for (int i = 0; i < dest->rows; i++) \
+		for (int j = 0; j < dest->cols; j++) {              \
+							  FLT A = cnMatrixGet(a, i,j);                 \
+			cnMatrixSet(dst, i, j, expr);\
+		}\
+
+#define SET_MATRIX_EXPR(dest, expr) \
+	for (int i = 0; i < dest->rows; i++) \
+		for (int j = 0; j < dest->cols; j++) {              \
+			cnMatrixSet(dest, i, j, expr);\
+		}\
+
 void cnSub(CnMat *dest, const CnMat *a, const CnMat *b) {
-	assert(a->cols * a->rows == dest->cols * dest->rows);
-	assert(b->cols * b->rows == dest->cols * dest->rows);
-	for (int i = 0; i < (a->cols * a->rows); i++)
-		dest->data[i] = a->data[i] - b->data[i];
+	SET_MATRIX(dest, a, b, A - B);
 }
 void cnAdd(CnMat *dest, const CnMat *a, const CnMat *b) {
-	assert(a->cols * a->rows == dest->cols * dest->rows);
-	assert(b->cols * b->rows == dest->cols * dest->rows);
-	for (int i = 0; i < (a->cols * a->rows); i++)
-		dest->data[i] = a->data[i] + b->data[i];
+	SET_MATRIX(dest, a, b, A + B)
 }
 void cnAddScaled(CnMat *dest, const CnMat *a, FLT as, const CnMat *b, FLT bs) {
-	assert(a->cols * a->rows == dest->cols * dest->rows);
-	assert(b->cols * b->rows == dest->cols * dest->rows);
-	for (int i = 0; i < dest->cols * dest->rows; i++) {
-		dest->data[i] = a->data[i] * as + b->data[i] * bs;
-	}
+	SET_MATRIX(dest, a, b, A * as + B * bs)
 }
 void cnScale(CnMat *dest, const CnMat *a, FLT s) {
-	assert(a->cols * a->rows == dest->cols * dest->rows);
-	for (int i = 0; i < (a->cols * a->rows); i++)
-	  dest->data[i] = a->data[i] * s;
+	SET_MATRIX_UNARY(dest, a, A * s);
 }
 void cnElementwiseMultiply(CnMat *dest, const CnMat *a, const CnMat *b) {
-	assert(a->cols * a->rows == dest->cols * dest->rows);
-	assert(b->cols * b->rows == dest->cols * dest->rows);
-	for (int i = 0; i < dest->cols * dest->rows; i++) {
-		dest->data[i] = a->data[i] * b->data[i];
-	}
+	SET_MATRIX(dest, a, b, A * B)
 }
 
 FLT cnDot(const CnMat* a, const CnMat* b) {
-  assert(a->cols * a->rows == b->cols * b->rows);
-  
   FLT rtn = 0;
-  for (int i = 0; i < a->cols * a->rows; i++) {
-    rtn += a->data[i] * b->data[i];
-  }
+  ITER_MATRIX(a, b, rtn += A * B);
   return rtn;
 }
 
@@ -116,20 +130,14 @@ static FLT linmath_normrand(FLT mu, FLT sigma) {
 }
 
 void cnRand(CnMat *arr, FLT mu, FLT sigma) {
-    for (int i = 0; i < arr->rows; i++)
-        for (int j = 0; j < arr->cols; j++)
-            CN_RAW_PTR(arr)[i * arr->cols + j] = linmath_normrand(mu, sigma);
+	SET_MATRIX_EXPR(arr, linmath_normrand(mu, sigma));
 }
 
 CN_LOCAL_ONLY void cnSetZero(CnMat *arr) {
-	for (int i = 0; i < arr->rows; i++)
-		for (int j = 0; j < arr->cols; j++)
-			CN_RAW_PTR(arr)[i * arr->cols + j] = 0;
+	SET_MATRIX_EXPR(arr, 0);
 }
 CN_LOCAL_ONLY void cvSetIdentity(CnMat *arr) {
-	for (int i = 0; i < arr->rows; i++)
-		for (int j = 0; j < arr->cols; j++)
-			CN_RAW_PTR(arr)[i * arr->cols + j] = i == j;
+	SET_MATRIX_EXPR(arr, i == j);
 }
 
 CN_LOCAL_ONLY void cnReleaseMat(CnMat **mat) {

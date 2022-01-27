@@ -175,9 +175,7 @@ static inline bool cn_is_finite(const struct CnMat *m) {
 }
 
 static inline void cn_matrix_copy(struct CnMat *dst, const struct CnMat *src) {
-	assert(dst->rows == src->rows);
-	assert(dst->cols == src->cols);
-	memcpy(CN_FLT_PTR(dst), CN_FLT_PTR(src), sizeof(FLT) * dst->cols * dst->rows);
+	cnCopy(src, dst, 0);
 }
 
 static inline FLT *cn_as_vector(struct CnMat *m) {
