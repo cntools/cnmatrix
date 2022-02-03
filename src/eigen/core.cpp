@@ -16,6 +16,10 @@ void cnMulTransposed(const CnMat *src, CnMat *dst, int order, const CnMat *delta
 	auto srcEigen = CONVERT_TO_EIGEN_PTR(src);
 	auto dstEigen = CONVERT_TO_EIGEN_PTR(dst);
 
+	int drows = order == 0 ? dst->rows : dst->cols;
+	assert(drows == dst->cols);
+	assert(order == 1 ? (dst->cols == src->cols) : (dst->cols == src->rows));
+
 	if (delta) {
 		auto deltaEigen = CONVERT_TO_EIGEN_PTR(delta);
 		if (order == 0)
