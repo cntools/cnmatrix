@@ -11,10 +11,17 @@ endif()
 include(CheckIncludeFile)
 include (CheckSymbolExists)
 
-option(DOWNLOAD_EIGEN "Download eigen if it isn't installed on the system" ON)
-option(USE_EIGEN "Use eigen for math operations" DOWNLOAD_EIGEN)
-option(USE_COLUMN_MAJOR_MATRICES "Use column major matrices for math operations" OFF)
-option(USE_SINGLE_PRECISION "Use floats instead of doubles" OFF)
+
+macro(CNMATRIX_OPTION ARG DESC)
+  option(${ARG} ${DESC} ${ARGN})
+  SET(${ARG} ${ARGN})
+  message("-- CNMatrix option: ${ARG}: ${ARGN}")
+endmacro()
+
+CNMATRIX_OPTION(DOWNLOAD_EIGEN "Download eigen if it isn't installed on the system" ON)
+CNMATRIX_OPTION(USE_EIGEN "Use eigen for math operations" ${DOWNLOAD_EIGEN})
+CNMATRIX_OPTION(USE_COLUMN_MAJOR_MATRICES "Use column major matrices for math operations" OFF)
+CNMATRIX_OPTION(USE_SINGLE_PRECISION "Use floats instead of doubles" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -31,6 +38,8 @@ if(NOT EIGEN3_FOUND)
     message(WARNING "Could not find eigen; falling back to other backend")
     set(USE_EIGEN OFF)
   endif()
+else()
+  MESSAGE("Found system eigen")
 endif()
 
 IF(USE_EIGEN)
@@ -49,8 +58,7 @@ if(NOT CBLAS_LIB)
   endif()
 endif()
 
-option(USE_OPENBLAS "Use OpenBLAS" ${USE_OPENBLAS_DEFAULT})
-
+CNMATRIX_OPTION(USE_OPENBLAS "Use OpenBLAS" ${USE_OPENBLAS_DEFAULT})
 
 install(DIRECTORY include/cnmatrix DESTINATION include)
 include(GNUInstallDirs)
