@@ -1,0 +1,17 @@
+Determining if the include file lapacke/lapacke.h exists failed with the following output:
+Change Dir: /home/asw/roslibsurvive_ws/src/roslibsurvive/include/cnmatrix/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_f45c2/fast && /usr/bin/make -f CMakeFiles/cmTC_f45c2.dir/build.make CMakeFiles/cmTC_f45c2.dir/build
+make[1]: Entering directory '/home/asw/roslibsurvive_ws/src/roslibsurvive/include/cnmatrix/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f45c2.dir/CheckIncludeFile.c.o
+/usr/bin/cc   -fPIC -Wall -Wno-unused-variable -Wno-switch -Wno-parentheses -Wno-missing-braces -Werror=return-type -fvisibility=hidden -Werror=vla -fno-math-errno -Werror=missing-field-initializers -Werror=pointer-arith -std=gnu99 -Werror=incompatible-pointer-types -Werror=implicit-function-declaration     -o CMakeFiles/cmTC_f45c2.dir/CheckIncludeFile.c.o   -c /home/asw/roslibsurvive_ws/src/roslibsurvive/include/cnmatrix/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+/home/asw/roslibsurvive_ws/src/roslibsurvive/include/cnmatrix/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: lapacke/lapacke.h: No such file or directory
+    1 | #include <lapacke/lapacke.h>
+      |          ^~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTC_f45c2.dir/build.make:66: CMakeFiles/cmTC_f45c2.dir/CheckIncludeFile.c.o] Error 1
+make[1]: Leaving directory '/home/asw/roslibsurvive_ws/src/roslibsurvive/include/cnmatrix/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_f45c2/fast] Error 2
+
+
+
